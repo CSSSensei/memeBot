@@ -69,6 +69,20 @@ async def create_meme_lmao(message: Message, mode='in'):
         await bot.send_message(chat_id=972753303, text=f'Произошла ошибка! Код 634\n{e}')
 
 
+@dp.message(Command(commands='help'))
+async def help_command(message: Message):
+    await message.answer('<b>Помощь калекам</b>\nДля создания реальной ржаки, тебе нужно нажать на кнопочки снизу (Выбрать шаблон)\n'
+                         'Далее пишешь: запрос на картинку, текст сверху и текст снизу. Всё с новой строчки!\n\n'
+                         '<b>Пример</b>\n'
+                         '<blockquote>Камчатка\n'
+                         'Сочи\n'
+                         'Вы ебанутые?</blockquote>\n\n'
+                         'Так же ты можешь прислать фотку и подписать её верхним и нижним текстом\n\n'
+                         '<b>Пример</b> (Подпись к фотке)\n'
+                         '<blockquote>Сочи\n'
+                         'Вы ебанутые?</blockquote>', reply_markup=basic_keyboard)
+
+
 @dp.message(Command(commands='deme'))
 async def create_demo_command(message: Message):
     await create_meme_lmao(message, 'de')
