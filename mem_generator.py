@@ -54,10 +54,10 @@ async def create_meme(path_img: str = None,
         else await take_from_db()
 
     mem_path_img = path_img if path_img \
-        else search_picture(mem_search_text)
+        else await search_picture(mem_search_text)
 
     mem_upper_text = upper_text if upper_text \
-        else f"Жители {word2case(mem_search_text, 'Р')}"
+        else f"Жители {await word2case(mem_search_text, 'Р')}"
 
     mem_bottom_text = bottom_text if bottom_text \
         else random_insult()

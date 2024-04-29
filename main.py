@@ -57,16 +57,21 @@ async def process_start_command(message: Message, state: FSMContext):
 
 
 @dp.message(Command(commands='meme'))
-async def create_meme_lmao(message: Message):
+async def create_meme_lmao(message: Message, mode='in'):
     try:
         meme_txt = message.text[5:].strip().split('\n')
         meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
-        meme_path = await create_meme(None, *meme_txt)
+        meme_path = await create_meme(None, *meme_txt, mode=mode)
         await message.answer_photo(photo=FSInputFile(meme_path), reply_markup=basic_keyboard)
         os.remove(meme_path)
     except Exception as e:
         await message.answer('Что-то пошло не так', reply_markup=basic_keyboard)
         await bot.send_message(chat_id=972753303, text=f'Произошла ошибка! Код 634\n{e}')
+
+
+@dp.message(Command(commands='deme'))
+async def create_demo_command(message: Message):
+    await create_meme_lmao(message, 'de')
 
 
 @dp.message(F.text == 'Демотиватор')
@@ -75,7 +80,7 @@ async def get_demotivator(message: Message, state: FSMContext):
     await state.set_state(MemeStates.demotivator)
 
 
-@dp.message(F.text == 'Мем')
+@dp.message(F.text == 'Мемас')
 async def get_meme(message: Message, state: FSMContext):
     await message.answer('Введи текст для шутейки', reply_markup=ReplyKeyboardRemove())
     await state.set_state(MemeStates.meme)

@@ -1,10 +1,9 @@
-import requests
-import json
+import aiohttp
 
 url = 'https://ws3.morpher.ru/russian/declension'
 
 
-def word2case(town: str, case: str) -> str:
+async def word2case(town: str, case: str) -> str:
 
     headers = {'User-Agent': 'TG'}
 
@@ -13,15 +12,13 @@ def word2case(town: str, case: str) -> str:
         'format': 'json',
     }
 
-    response = requests.get(url=url,
-                            params=params,
-                            headers=headers)
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url=url, params=params, headers=headers) as response:
+            data = await response.json()
 
-    data = json.loads(response.text)
-
-    if response.status_code == 200:
-        return data.get(case)
-    elif response.status_code == 402:
-        return town
-    else:
-        raise Exception(f'Ошибка при запросе склонения: {response.status_code}')
+            if response.status == 200:
+                return data.get(case)
+            elif response.status == 402:
+                return town
+            else:
+                raise Exception(f'Ошибка при запросе склонения: {response.status}')

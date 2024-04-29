@@ -7,7 +7,6 @@ def create_insult(path: str,
                   bottom_text: str,
                   size: int = 1000,
                   distance: int = 50) -> str:
-
     save_path = f'{path[:-4]}-mem-insult.png'
     text_size = size // 10
 
@@ -54,7 +53,6 @@ def create_demotiv(path: str,
                    footnote: str = 'phasalopedia.ru',
                    size: int = 1000,
                    distance: int = 50) -> str:
-
     save_path = f'{path[:-4]}-mem-demotiv.png'
     text_size = size // 10
 
@@ -121,7 +119,6 @@ def create_demotiv(path: str,
     img.save(save_path)
     return save_path
 
-
 # create_picture('pictures/Коты.png', 'Сиси')
 # create_picture('pictures/Коты.png', 'Кременчуг-Константиновского')
 
@@ -142,19 +139,19 @@ def create_demotiv(path: str,
 # for y in range(0, size, 4):
 #     img.putpixel((size // 2, y), (0, 0, 222))
 
-    # img_cnv.line([(0, size - distance), (size, size - distance)],
-    #              fill=(255, 0, 0),
-    #              width=1)
-    #
-    # img_cnv.line([(0, size - distance - text_size * 0.74 // 2), (size, size - distance - text_size * 0.74 // 2)],
-    #              fill=(255, 0, 0),
-    #              width=1)
-    #
-    # img_cnv.line([(0, size - 1.5 * distance - text_size * 0.74 // 2), (size, size - 1.5 * distance - text_size * 0.74 // 2)],
-    #              fill=(255, 0, 0),
-    #              width=1)
-    #
-    # img_cnv.line(
-    #     [(0, size - 1.5 * distance - text_size * 0.74 // 2 - text_size * 0.68), (size, size - 1.5 * distance - text_size * 0.74 // 2 - text_size * 0.68)],
-    #     fill=(255, 0, 0),
-    #     width=1)
+# img_cnv.line([(0, size - distance), (size, size - distance)],
+#              fill=(255, 0, 0),
+#              width=1)
+#
+# img_cnv.line([(0, size - distance - text_size * 0.74 // 2), (size, size - distance - text_size * 0.74 // 2)],
+#              fill=(255, 0, 0),
+#              width=1)
+#
+# img_cnv.line([(0, size - 1.5 * distance - text_size * 0.74 // 2), (size, size - 1.5 * distance - text_size * 0.74 // 2)],
+#              fill=(255, 0, 0),
+#              width=1)
+#
+# img_cnv.line(
+#     [(0, size - 1.5 * distance - text_size * 0.74 // 2 - text_size * 0.68), (size, size - 1.5 * distance - text_size * 0.74 // 2 - text_size * 0.68)],
+#     fill=(255, 0, 0),
+#     width=1)
