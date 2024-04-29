@@ -49,12 +49,15 @@ async def create_meme(path_img: str = None,
                       upper_text: str = None,
                       bottom_text: str = None,
                       mode='in'):  # in, de
-    rand_int = randint(1, 10 ** 9)
-    mem_search_text = search_text if search_text else await take_from_db()
 
-    mem_path_img = path_img if path_img else search_picture(mem_search_text)
+    mem_search_text = search_text if search_text \
+        else await take_from_db()
 
-    mem_upper_text = upper_text if upper_text else f"Жители {word2case(mem_search_text, 'Р')}"
+    mem_path_img = path_img if path_img \
+        else search_picture(mem_search_text)
+
+    mem_upper_text = upper_text if upper_text \
+        else f"Жители {word2case(mem_search_text, 'Р')}"
 
     mem_bottom_text = bottom_text if bottom_text \
         else random_insult()

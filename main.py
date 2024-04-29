@@ -31,7 +31,7 @@ class MemeStates(StatesGroup):
 
 
 meme_button: KeyboardButton = KeyboardButton(
-    text='Мем')
+    text='Мемас')
 demotivator_button: KeyboardButton = KeyboardButton(
     text='Демотиватор')
 basic_keyboard: ReplyKeyboardMarkup = ReplyKeyboardMarkup(

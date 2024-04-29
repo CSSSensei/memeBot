@@ -14,7 +14,7 @@ def clean_link(link) -> str:
 
 def search_picture(name: str):
     response = requests.get(f'https://www.google.com/search?q={name}&tbm=isch')
-    rand_int = randint(1, 10 ** 9)
+    save_path = f'{os.path.dirname(__file__)}/pictures/{name}-{randint(1, 10 ** 9)}.png'
 
     if response.status_code == 200:
         bs = BeautifulSoup(response.content, 'html.parser')
@@ -26,14 +26,14 @@ def search_picture(name: str):
             if 'https://' in image:
                 response = requests.get(image)
                 if response.status_code == 200:
-                    with open(f'{os.path.dirname(__file__)}/pictures/{name}{rand_int}.png', 'wb') as file:
+                    with open(save_path, 'wb') as file:
                         file.write(response.content)
-                    return f'{os.path.dirname(__file__)}/pictures/{name}{rand_int}.png'
+                    return save_path
                 else:
-                    raise Exception('\033[33m{}\033[0m'.format(f'Ошибка при запросе картинки: {response.status_code}'))
+                    raise Exception(f'Ошибка при запросе картинки: {response.status_code}')
 
-        raise Exception('\033[33m{}\033[0m'.format(f'Ошибка при скачивании картинки: {response.status_code}'))
+        raise Exception(f'Ошибка при скачивании картинки: {response.status_code}')
 
     else:
-        raise Exception('\033[33m{}\033[0m'.format(f'Ошибка при поиске картинки: {response.status_code}'))
+        raise Exception(f'Ошибка при поиске картинки: {response.status_code}')
 

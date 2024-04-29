@@ -1,6 +1,7 @@
 from PIL import Image, ImageDraw, ImageFont
 import os
 
+
 def create_insult(path: str,
                   upper_text: str,
                   bottom_text: str,

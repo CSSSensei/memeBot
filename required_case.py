@@ -22,6 +22,6 @@ def word2case(town: str, case: str) -> str:
     if response.status_code == 200:
         return data.get(case)
     elif response.status_code == 402:
-        raise Exception('\033[33m{}\033[0m'.format(f'Закончилось количество запросов спряжения'))
+        return town
     else:
-        raise Exception('\033[33m{}\033[0m'.format(f'Ошибка при запросе склонения: {response.status_code}'))
+        raise Exception(f'Ошибка при запросе склонения: {response.status_code}')
