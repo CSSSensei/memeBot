@@ -3,18 +3,12 @@ import aiosqlite
 import sqlite3
 import os
 
-db = f'{os.path.dirname(__file__)}/DB/towns.db'
-
-
-async def get_async_connection():
-    async_connection = await aiosqlite.connect(db)
-    return async_connection
+townsDB = f'{os.path.dirname(__file__)}/DB/towns.db'
 
 
 async def take_from_db():
-    async_connection = await get_async_connection()
-    async with async_connection.cursor() as cursor:
-        await cursor.execute('SELECT name FROM towns WHERE used = False ORDER BY RANDOM() LIMIT 1')
+    async with aiosqlite.connect(townsDB) as db:
+        cursor = await db.execute('SELECT name FROM towns WHERE used = False ORDER BY RANDOM() LIMIT 1')
         town = await cursor.fetchone()
         if not town:
             return None
@@ -30,7 +24,9 @@ def print_db():
     for row in rows:
         print(row)
     print(len(rows))
+    cursor.close()
     conn.close()
+
 
 if __name__ == '__main__':
     print(asyncio.run(take_from_db()))
