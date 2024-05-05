@@ -5,8 +5,14 @@ import os
 def create_insult(path: str,
                   upper_text: str,
                   bottom_text: str,
-                  size: int = 1000,
-                  distance: int = 50) -> str:
+                  upper_color: str,
+                  bottom_color: str,
+                  upper_stroke_color: str,
+                  bottom_stroke_color: str,
+                  stroke_width: int,
+                  giant_text: bool,
+                  size: int,
+                  distance: int) -> str:
     save_path = f'{path[:-4]}-mem-insult.png'
     text_size = size // 10
 
@@ -50,9 +56,11 @@ def create_insult(path: str,
 def create_demotiv(path: str,
                    upper_text: str,
                    bottom_text: str,
-                   footnote: str = 'phasalopedia.ru',
-                   size: int = 1000,
-                   distance: int = 50) -> str:
+                   footnote: str,
+                   upper_color: str,
+                   bottom_color: str,
+                   size: int,
+                   distance: int) -> str:
     save_path = f'{path[:-4]}-mem-demotiv.png'
     text_size = size // 10
 
@@ -119,6 +127,20 @@ def create_demotiv(path: str,
     img.save(save_path)
     return save_path
 
+
+def create_book(path: str,
+                author: str,
+                title: str,
+                descriptor: str,
+                author_backing_color: str,
+                title_backing_color: str,
+                size: int) -> str:
+    save_path = f'{path[:-4]}-mem-demotiv.png'
+
+
+
+    img.save(save_path)
+    return save_path
 # create_picture('pictures/Коты.png', 'Сиси')
 # create_picture('pictures/Коты.png', 'Кременчуг-Константиновского')
 
