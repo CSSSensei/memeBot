@@ -250,7 +250,7 @@ async def create_meme(path_img: str = None,
     else:
         return mem_path_img
 
-    os.remove(mem_path_img)
+    # os.remove(mem_path_img)
     return path_mem
 
 
@@ -260,12 +260,13 @@ if __name__ == '__main__':
             path_img="pictures/1.jpg",
             # bottom_text="Вероника решает умереть",
             # bottom_text="1900",
-            bottom_text="Горе от ума",
+            # bottom_text="Горе от ума",
+            bottom_text="александр                      сергеевич грибоедов",
             # upper_text="Пауло коэльо",
             upper_text="Ирвин Шоу",
             # upper_text="александр сергеевич грибоедов",
             search_text=None,
-            mode='bo',
+            mode='in',
             upper_color='#588157',
             bottom_color='#588157',
             upper_stroke_color="#c1121f",

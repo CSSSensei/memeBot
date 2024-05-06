@@ -2,6 +2,27 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 
 
+def calc_font_size(text: str,
+                   width: int,
+                   font_path: str):
+
+    img = Image.new('RGB', (10, 10), color="#000000")
+    img_cnv = ImageDraw.Draw(img)
+
+    size1 = 100
+    size2 = 200
+
+    text_width1 = img_cnv.textlength(text, font=ImageFont.truetype(font_path, size1))
+    text_width2 = img_cnv.textlength(text, font=ImageFont.truetype(font_path, size2))
+
+    delta_font_size = size2 - size1
+    delta_text_width = text_width2 - text_width1
+
+    relation = delta_font_size / delta_text_width
+
+    return int(width * relation)
+
+
 def create_insult(path: str,
                   upper_text: str,
                   bottom_text: str,
@@ -14,23 +35,23 @@ def create_insult(path: str,
                   size: int,
                   distance: int) -> str:
     save_path = f'{path[:-4]}-mem-insult.png'
-    text_size = size if giant_text else size // 10
+    text_size = size // 10
     impact = f'{os.path.dirname(__file__)}/assets/Impact.ttf'
 
     img = Image.open(path).convert('RGB').resize((size, size))
     img_cnv = ImageDraw.Draw(img)
 
-    font = ImageFont.truetype(impact, text_size)
-    text_width_upper = img_cnv.textlength(upper_text, font=font)
-    text_width_bottom = img_cnv.textlength(bottom_text, font=font)
+    text_size1 = calc_font_size(upper_text, size - (2 * distance), impact)
+    text_size2 = calc_font_size(bottom_text, size - (2 * distance), impact)
 
-    while (text_width_upper >= size - (distance * 2) or
-           text_width_bottom >= size - (distance * 2)) and \
-            (text_size != 1):
-        text_size = text_size - 1 if text_size - 1 > 0 else 1
-        font = ImageFont.truetype(impact, text_size)
-        text_width_upper = img_cnv.textlength(upper_text, font=font)
-        text_width_bottom = img_cnv.textlength(bottom_text, font=font)
+    if giant_text:
+        text_size = min(text_size1, text_size2)
+    elif max(text_size1, text_size2) > text_size:
+        text_size = text_size
+    else:
+        text_size = min(text_size1, text_size2)
+
+    font = ImageFont.truetype(impact, text_size)
 
     img_cnv.text((size // 2, distance),
                  upper_text,
@@ -76,19 +97,16 @@ def create_demotiv(path: str,
     img = Image.new('RGB', (size, size), color="#000000")
     img_cnv = ImageDraw.Draw(img)
 
+    text_size1 = calc_font_size(upper_text, size - (2 * distance), times_new_roman)
+    text_size2 = calc_font_size(bottom_text, size - (2 * distance), arial)
+
+    if max(text_size1, text_size2) > text_size:
+        text_size = text_size
+    else:
+        text_size = min(text_size1, text_size2)
+
     font_upper = ImageFont.truetype(times_new_roman, text_size)
     font_bottom = ImageFont.truetype(arial, text_size // 2)
-    text_width_upper = img_cnv.textlength(upper_text, font=font_upper)
-    text_width_bottom = img_cnv.textlength(bottom_text, font=font_bottom)
-
-    while (text_width_upper >= img.width - (distance * 4) or
-           text_width_bottom >= img.width - (distance * 4)) and \
-            (text_size != 1):
-        text_size = text_size - 1 if text_size - 1 > 0 else 1
-        font_upper = ImageFont.truetype(times_new_roman, text_size)
-        font_bottom = ImageFont.truetype(arial, text_size // 2)
-        text_width_upper = img_cnv.textlength(upper_text, font=font_upper)
-        text_width_bottom = img_cnv.textlength(bottom_text, font=font_bottom)
 
     font_footnote = ImageFont.truetype(times_new_roman, 25)
 
@@ -334,12 +352,13 @@ def create_book(path: str,
 
     # TODO
     #  Тут сложная логика через левую коленку, но если в двух словах
-    #  скрипт вычислил свержу абсолютные значения для картинки, верхней и нижней имени автора.
+    #  скрипт вычислил сверху абсолютные значения для картинки, верхнего и нижнего имени автора.
     #  код ниже растягивает эти значения на оставшуюся часть картинки
     #
     #                    Срезаем место сверху
     #                    |          Срезаем место снизу
-    #                    L_______   L_________________________________________________
+    #                    |          |                                                    Срезаем расстояния меж блоками
+    #                    L_______   L_________________________________________________   L___________________
     place = img.height - distance - distance - descriptor_line_width - annotation_size - (4 * small_distance)
 
     relation4place = place / (illustration_height + upper_author_size + bottom_author_size)
