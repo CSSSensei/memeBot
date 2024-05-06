@@ -268,8 +268,12 @@ def create_book(path: str,
         title_name_font = myriad_pro_cond_italic
 
     if len(title) > 16:
-        bottom_title = " ".join(title.split()[(len(title.split()) // 2 + 1):])
+        bottom_title = " ".join(title.split()[(len(title.split()) // 2):])
         upper_title = " ".join(title.split()[:(len(title.split()) - len(title.split()) // 2)])
+
+        print(len(title.split()))
+        print(upper_title, len(title.split()) // 2)
+        print(bottom_title, len(title.split()) - len(title.split()) // 2)
 
         if len(upper_title) >= len(bottom_title):
             max_title = upper_title
@@ -332,7 +336,7 @@ def create_book(path: str,
     upper_author_font = ImageFont.truetype(upper_author_name_font, upper_author_size)
     upper_author_width = img_cnv.textlength(upper_author, font=upper_author_font)
 
-    while (upper_author_width >= (img.width - 2 * distance) - upper_author_size) and \
+    while (upper_author_width >= (img.width - 2.5 * distance) - upper_author_size) and \
             (upper_author_size != 1):
         upper_author_size = upper_author_size - 1 if upper_author_size - 1 > 0 else 1
         upper_author_font = ImageFont.truetype(upper_author_name_font, upper_author_size)
@@ -341,10 +345,9 @@ def create_book(path: str,
     bottom_author_size = calc_font_size(bottom_author, int(img.width - 2.5 * distance), myriad_pro_cond_bold)
     bottom_author_font = ImageFont.truetype(myriad_pro_cond_bold, bottom_author_size)
 
-    # TODO
-    #  Тут сложная логика через левую коленку, но если в двух словах
-    #  скрипт вычислил сверху абсолютные значения для картинки, верхнего и нижнего имени автора.
-    #  код ниже растягивает эти значения на оставшуюся часть картинки
+    # Тут сложная логика через левую коленку, но если в двух словах
+    # скрипт вычислил сверху абсолютные значения для картинки, верхнего и нижнего имени автора.
+    # код ниже растягивает эти значения на оставшуюся часть картинки
     #
     #                    Срезаем место сверху
     #                    |          Срезаем место снизу

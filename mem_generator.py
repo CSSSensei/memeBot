@@ -258,19 +258,21 @@ if __name__ == '__main__':
     asyncio.run(
         create_meme(
             path_img="pictures/1.jpg",
-            # bottom_text="Вероника решает умереть",
-            bottom_text="Вероника решает 1умереть 2умереть 3умереть",
+            # bottom_text="отличный примерпример",
+            # bottom_text="1985",
             # bottom_text="Горе от ума",
-            # bottom_text="Вероника решает умереть",
+            bottom_text="Вероника решает умереть сегодня",
             # upper_text="Пауло коэльо",
-            upper_text="Ирвин Шоу",
+            # upper_text="Ирвин жопэ Шоу",
+            # upper_text="Харпер ли",
             # upper_text="александр сергеевич грибоедов",
+            upper_text="Хуй сергеевич",
             search_text=None,
             mode='bo',
             upper_color='#588157',
             bottom_color='#588157',
-            upper_stroke_color="#c1121f",
-            bottom_stroke_color="#2d3a53",
+            # upper_stroke_color="#c1121f",
+            # bottom_stroke_color="#2d3a53",
             stroke_width=4,
             giant_text=False
         )
