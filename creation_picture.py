@@ -1,3 +1,5 @@
+import random
+
 from PIL import Image, ImageDraw, ImageFont
 import os
 
@@ -44,12 +46,19 @@ def create_insult(path: str,
     text_size1 = calc_font_size(upper_text, size - (2 * distance), impact)
     text_size2 = calc_font_size(bottom_text, size - (2 * distance), impact)
 
+    print(text_size1)
+    print(text_size2)
+    print()
+    print(text_size)
+
     if giant_text:
         text_size = min(text_size1, text_size2)
-    elif max(text_size1, text_size2) > text_size:
-        text_size = text_size
-    else:
+    elif min(text_size1, text_size2) < text_size:
         text_size = min(text_size1, text_size2)
+    else:
+        text_size = text_size
+
+    print(text_size)
 
     font = ImageFont.truetype(impact, text_size)
 
@@ -95,15 +104,14 @@ def create_demotiv(path: str,
     img_past = img_past.resize((size - (distance * 2), int((size - (distance * 2)) * relation)))
 
     img = Image.new('RGB', (size, size), color="#000000")
-    img_cnv = ImageDraw.Draw(img)
 
     text_size1 = calc_font_size(upper_text, size - (2 * distance), times_new_roman)
     text_size2 = calc_font_size(bottom_text, size - (2 * distance), arial)
 
-    if max(text_size1, text_size2) > text_size:
-        text_size = text_size
-    else:
+    if min(text_size1, text_size2) < text_size:
         text_size = min(text_size1, text_size2)
+    else:
+        text_size = text_size
 
     font_upper = ImageFont.truetype(times_new_roman, text_size)
     font_bottom = ImageFont.truetype(arial, text_size // 2)
@@ -214,7 +222,7 @@ def create_book(path: str,
                        img.height - (distance - 2 * small_distance)),
                       fill="#000000")
 
-    annotation_size = 120
+    annotation_size = random.randint(90, 140)
     font_annotation = ImageFont.truetype(myriad_pro_cond_italic, 19)
 
     if annotation_location == 'l':
@@ -268,15 +276,8 @@ def create_book(path: str,
         else:
             max_title = bottom_title
 
-        title_size = size // 2
+        title_size = calc_font_size(max_title, int(img.width - 3.5 * distance - 153), title_name_font)
         title_font = ImageFont.truetype(title_name_font, title_size)
-        title_width = img_cnv.textlength(max_title, font=title_font)
-
-        while (title_width >= img.width - 3.5 * distance - 153) and \
-                (title_size != 1):
-            title_size = title_size - 1 if title_size - 1 > 0 else 1
-            title_font = ImageFont.truetype(title_name_font, title_size)
-            title_width = img_cnv.textlength(max_title, font=title_font)
 
         img_cnv.text((position_l_title + distance // 4,
                       img.height - (distance - small_distance) - descriptor_line_width - (annotation_size // 2) - 5),
@@ -295,15 +296,12 @@ def create_book(path: str,
                      )
 
     else:
-        title_size = size // 2
-        title_font = ImageFont.truetype(title_name_font, title_size)
-        title_width = img_cnv.textlength(title, font=title_font)
+        title_size = calc_font_size(title, int(img.width - 3.5 * distance - 153), title_name_font)
 
-        while (title_width >= img.width - 3.5 * distance - 153) and \
-                (title_size != 1):
-            title_size = title_size - 1 if title_size - 1 > 0 else 1
-            title_font = ImageFont.truetype(title_name_font, title_size)
-            title_width = img_cnv.textlength(title, font=title_font)
+        if title_size > annotation_size:
+            title_size = annotation_size
+
+        title_font = ImageFont.truetype(title_name_font, title_size)
 
         if len(title) < 6:
             position = img.height - (distance - small_distance) - descriptor_line_width - int(0.82 * annotation_size // 2)
@@ -340,15 +338,8 @@ def create_book(path: str,
         upper_author_font = ImageFont.truetype(upper_author_name_font, upper_author_size)
         upper_author_width = img_cnv.textlength(upper_author, font=upper_author_font)
 
-    bottom_author_size = size // 2
+    bottom_author_size = calc_font_size(bottom_author, int(img.width - 2.5 * distance), myriad_pro_cond_bold)
     bottom_author_font = ImageFont.truetype(myriad_pro_cond_bold, bottom_author_size)
-    bottom_author_width = img_cnv.textlength(bottom_author, font=bottom_author_font)
-
-    while (bottom_author_width >= (img.width - 2.5 * distance)) and \
-            (bottom_author_size != 1):
-        bottom_author_size = bottom_author_size - 1 if bottom_author_size - 1 > 0 else 1
-        bottom_author_font = ImageFont.truetype(myriad_pro_cond_bold, bottom_author_size)
-        bottom_author_width = img_cnv.textlength(bottom_author, font=bottom_author_font)
 
     # TODO
     #  Тут сложная логика через левую коленку, но если в двух словах
