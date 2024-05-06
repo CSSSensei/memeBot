@@ -53,14 +53,17 @@ from config import *
 class MemeStates(StatesGroup):
     demotivator = State()
     meme = State()
+    book = State()
 
 
 meme_button: KeyboardButton = KeyboardButton(
     text='Мемас')
 demotivator_button: KeyboardButton = KeyboardButton(
     text='Демотиватор')
+book_button: KeyboardButton = KeyboardButton(
+    text='Чтиво')
 basic_keyboard: ReplyKeyboardMarkup = ReplyKeyboardMarkup(
-    keyboard=[[meme_button, demotivator_button]], resize_keyboard=True)
+    keyboard=[[meme_button, demotivator_button], [book_button]], resize_keyboard=True)
 
 
 @dp.message(Command(commands='delete_pictures'), F.from_user.id.in_({972753303}))
@@ -113,6 +116,11 @@ async def create_demo_command(message: Message):
     await create_meme_lmao(message, 'de')
 
 
+@dp.message(Command(commands='book'))
+async def create_demo_command(message: Message):
+    await create_meme_lmao(message, 'bo')
+
+
 @dp.message(F.text == 'Демотиватор')
 async def get_demotivator(message: Message, state: FSMContext):
     await message.answer('Введи текст для шутейки', reply_markup=ReplyKeyboardRemove())
@@ -123,6 +131,12 @@ async def get_demotivator(message: Message, state: FSMContext):
 async def get_meme(message: Message, state: FSMContext):
     await message.answer('Введи текст для шутейки', reply_markup=ReplyKeyboardRemove())
     await state.set_state(MemeStates.meme)
+
+
+@dp.message(F.text == 'Чтиво')
+async def get_meme(message: Message, state: FSMContext):
+    await message.answer('Введи текст для шутейки', reply_markup=ReplyKeyboardRemove())
+    await state.set_state(MemeStates.book)
 
 
 @dp.message(F.content_type.in_({'text', 'photo'}), StateFilter(MemeStates.demotivator))
@@ -155,6 +169,11 @@ async def send_meme(message: Message, state: FSMContext, mode='de'):
 @dp.message(F.content_type.in_({'text', 'photo'}), StateFilter(MemeStates.meme))
 async def send_meme_in_bot(message: Message, state: FSMContext):
     await send_meme(message, state, 'in')
+
+
+@dp.message(F.content_type.in_({'text', 'photo'}), StateFilter(MemeStates.book))
+async def send_meme_in_bot(message: Message, state: FSMContext):
+    await send_meme(message, state, 'bo')
 
 
 @dp.message(StateFilter(MemeStates.demotivator))

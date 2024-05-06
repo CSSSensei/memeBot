@@ -250,7 +250,7 @@ async def create_meme(path_img: str = None,
     else:
         return mem_path_img
 
-    # os.remove(mem_path_img)
+    os.remove(mem_path_img)
     return path_mem
 
 
