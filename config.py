@@ -33,6 +33,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv, find_dotenv
 from aiogram.client.session.aiohttp import AiohttpSession
+from mem_generator import create_meme
+import g4f
 
 load_dotenv(find_dotenv())
 
@@ -41,6 +43,8 @@ storage: MemoryStorage = MemoryStorage()
 
 bot: Bot = Bot(token=API_TOKEN, parse_mode="HTML")
 dp: Dispatcher = Dispatcher(storage=storage)
+gpt_client = g4f.client.Client()
+
 current_dm_id = {}
 states_users = {}
 caption_global = {}
@@ -64,10 +68,23 @@ dice_points = {'🎲': 6, '🎯': 6, '🎳': 6, '🏀': 4, '⚽': 3, '🎰': 64}
 # with open('DB/replicas.txt', 'r', encoding='utf-8') as file:
 #     replicas = json.load(file)
 #     
-    
-import os
-from mem_generator import create_meme
 
 
+async def get_neuro_comment(message_text):
+    response = gpt_client.chat.completions.create(
+        model='gpt-4',
+        messages=[{"role": "user",
+                   "content": f"Представь, что ты гопник. Объясни, что такое {message_text}, но говоря как некомпетентный человек и в дворовом стиле"}],
+    )
+    return response.choices[0].message.content
 
+
+async def loading_indicator(chat_id, mes_id):
+    clock = '🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛'
+    cnt = 0
+    while True:
+        await bot.edit_message_text(chat_id=chat_id, message_id=mes_id,
+                                    text=f'Секунду, братан, шестерёнки работают {clock[cnt % len(clock)]}')
+        await asyncio.sleep(1)
+        cnt += 1
 

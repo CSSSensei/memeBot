@@ -50,6 +50,12 @@ from config import *
 
 
 
+class explain_blyat(BaseFilter):
+    async def __call__(self, message: Message) -> bool:
+        required = 'поясни за '
+        return message.text[0:len(required)] == required
+
+
 class MemeStates(StatesGroup):
     demotivator = State()
     meme = State()
@@ -64,6 +70,21 @@ book_button: KeyboardButton = KeyboardButton(
     text='Чтиво')
 basic_keyboard: ReplyKeyboardMarkup = ReplyKeyboardMarkup(
     keyboard=[[meme_button, demotivator_button], [book_button]], resize_keyboard=True)
+
+
+@dp.message(F.text, explain_blyat())
+async def explain_func(message: Message):
+    required = 'поясни за '
+    txt = message.text[len(required):]
+
+    sent_message = await message.answer('Секунду, братан, шестерёнки работают')
+    loading_task = asyncio.create_task(loading_indicator(sent_message.chat.id, sent_message.message_id))
+    try:
+        response = await get_neuro_comment(txt.replace("\n", " "))
+        await message.answer(response, reply_markup=basic_keyboard)
+    finally:
+        loading_task.cancel()
+        await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
 
 
 @dp.message(Command(commands='delete_pictures'), F.from_user.id.in_({972753303}))
