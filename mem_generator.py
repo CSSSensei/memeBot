@@ -258,10 +258,10 @@ if __name__ == '__main__':
     asyncio.run(
         create_meme(
             path_img="pictures/1.jpg",
-            # bottom_text="отличный примерпример",
+            bottom_text="о88888888тли чны68888866йп",
             # bottom_text="1985",
             # bottom_text="Горе от ума",
-            bottom_text="Вероника решает умереть сегодня",
+            # bottom_text="Вероника решает умереть",
             # upper_text="Пауло коэльо",
             # upper_text="Ирвин жопэ Шоу",
             # upper_text="Харпер ли",

@@ -267,13 +267,9 @@ def create_book(path: str,
     else:
         title_name_font = myriad_pro_cond_italic
 
-    if len(title) > 16:
-        bottom_title = " ".join(title.split()[(len(title.split()) // 2):])
+    if len(title.split()) >= 2 and len(title) > 16:
+        bottom_title = " ".join(title.split()[(len(title.split()) // 2 + len(title.split()) % 2):])
         upper_title = " ".join(title.split()[:(len(title.split()) - len(title.split()) // 2)])
-
-        print(len(title.split()))
-        print(upper_title, len(title.split()) // 2)
-        print(bottom_title, len(title.split()) - len(title.split()) // 2)
 
         if len(upper_title) >= len(bottom_title):
             max_title = upper_title
