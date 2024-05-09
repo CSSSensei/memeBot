@@ -53,13 +53,13 @@ from config import *
 class explain_blyat(BaseFilter):
     async def __call__(self, message: Message) -> bool:
         required = 'поясни за '
-        return message.text[0:len(required)] == required
+        return message.text[0:len(required)].lower() == required
 
 
-class MemeStates(StatesGroup):
-    demotivator = State()
-    meme = State()
-    book = State()
+# class MemeStates(StatesGroup):
+#     demotivator = State()
+#     meme = State()
+#     book = State()
 
 
 meme_button: KeyboardButton = KeyboardButton(
@@ -68,8 +68,10 @@ demotivator_button: KeyboardButton = KeyboardButton(
     text='Демотиватор')
 book_button: KeyboardButton = KeyboardButton(
     text='Чтиво')
+settings_button: KeyboardButton = KeyboardButton(
+    text='Настройки')
 basic_keyboard: ReplyKeyboardMarkup = ReplyKeyboardMarkup(
-    keyboard=[[meme_button, demotivator_button], [book_button]], resize_keyboard=True)
+    keyboard=[[meme_button, demotivator_button], [book_button, settings_button]], resize_keyboard=True)
 
 
 @dp.message(F.text, explain_blyat())
@@ -101,21 +103,14 @@ async def delete_pictures_in_directory(message: Message):
 
 
 @dp.message(CommandStart())
-async def process_start_command(message: Message, state: FSMContext):
+async def process_start_command(message: Message):
+    await UserDB.add_new_user(message.from_user.id, message.from_user.username)
     await message.answer('Привет! В этом боте ты можешь сгенерировать мем или демотиватор!', reply_markup=basic_keyboard)
 
 
 @dp.message(Command(commands='meme'))
-async def create_meme_lmao(message: Message, mode='in'):
-    try:
-        meme_txt = message.text[5:].strip().split('\n')
-        meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
-        meme_path = await create_meme(None, *meme_txt, mode=mode)
-        await message.answer_photo(photo=FSInputFile(meme_path), reply_markup=basic_keyboard)
-        os.remove(meme_path)
-    except Exception as e:
-        await message.answer('Что-то пошло не так', reply_markup=basic_keyboard)
-        await bot.send_message(chat_id=972753303, text=f'Произошла ошибка! Код 634\n{e}')
+async def send_meme_lmao(message: Message):
+    await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='in')
 
 
 @dp.message(Command(commands='help'))
@@ -134,34 +129,47 @@ async def help_command(message: Message):
 
 @dp.message(Command(commands='deme'))
 async def create_demo_command(message: Message):
-    await create_meme_lmao(message, 'de')
+    await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='de')
 
 
 @dp.message(Command(commands='book'))
 async def create_demo_command(message: Message):
-    await create_meme_lmao(message, 'bo')
+    await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='bo')
+
+
+@dp.message(F.text == 'Настройки')
+async def settings_handler(message: Message):
+    settings = await UserDB.get_user(message.from_user.id, message.from_user.username)
+
+    txt = ('<b>Твои текущие настройки</b>\n\n'
+           f'Режим: <i>{settings.mode}</i>\n'
+           f'Цвет верхнего текста: <i>{settings.upper_color}</i>\n'
+           f'Цвет нижнего текста: <i>{settings.bottom_color}</i>\n'
+           f'Контур верхнего текста: <i>{settings.upper_stroke_color}</i>\n'
+           f'Контур нижнего текста: <i>{settings.bottom_stroke_color}</i>\n'
+           f'Регистр текста: <i>{settings.giant_text}</i>\n')
+    await message.answer(txt, reply_markup=get_keyboard(settings))
 
 
 @dp.message(F.text == 'Демотиватор')
-async def get_demotivator(message: Message, state: FSMContext):
-    await message.answer('Введи текст для шутейки', reply_markup=ReplyKeyboardRemove())
-    await state.set_state(MemeStates.demotivator)
+async def set_demotivator(message: Message):
+    await UserDB.change_mode(message.from_user.id, 'de')
+    await message.answer('Режим изменён на <b>демотиватор</b>', reply_markup=basic_keyboard)
 
 
 @dp.message(F.text == 'Мемас')
-async def get_meme(message: Message, state: FSMContext):
-    await message.answer('Введи текст для шутейки', reply_markup=ReplyKeyboardRemove())
-    await state.set_state(MemeStates.meme)
+async def set_meme(message: Message):
+    await UserDB.change_mode(message.from_user.id, 'in')
+    await message.answer('Режим изменён на <b>мемас</b>', reply_markup=basic_keyboard)
 
 
 @dp.message(F.text == 'Чтиво')
-async def get_meme(message: Message, state: FSMContext):
-    await message.answer('Введи текст для шутейки', reply_markup=ReplyKeyboardRemove())
-    await state.set_state(MemeStates.book)
+async def set_book(message: Message,):
+    await UserDB.change_mode(message.from_user.id, 'bo')
+    await message.answer('Режим изменён на <b>чтиво</b>', reply_markup=basic_keyboard)
 
 
-@dp.message(F.content_type.in_({'text', 'photo'}), StateFilter(MemeStates.demotivator))
-async def send_meme(message: Message, state: FSMContext, mode='de'):
+async def send_meme(message: Message, user: UserDB, mode=None):
     try:
         if message.text is None and message.caption is None:
             await message.answer('Ты забыл про надпись')
@@ -174,36 +182,32 @@ async def send_meme(message: Message, state: FSMContext, mode='de'):
             await bot.download_file((await bot.get_file(message.photo[-1].file_id)).file_path, photo_path)
             meme_txt = [None] + meme_txt
         try:
-            meme_path = await create_meme(photo_path, *meme_txt, mode=mode)
+            meme_path = await create_meme(photo_path, *meme_txt,
+                                          mode=mode if mode else user.mode,
+                                          upper_color=user.upper_color,
+                                          bottom_color=user.bottom_color,
+                                          upper_stroke_color=user.upper_stroke_color,
+                                          bottom_stroke_color=user.bottom_stroke_color,
+                                          stroke_width=user.stroke_width,
+                                          giant_text=user.giant_text)
             await message.answer_photo(photo=FSInputFile(meme_path), reply_markup=basic_keyboard)
             os.remove(meme_path)
         except Exception as e:
             await message.answer('Что-то пошло не так', reply_markup=basic_keyboard)
             await bot.send_message(chat_id=972753303, text=f'Произошла ошибка!\n{e}')
-
-        await state.clear()
     except Exception as e:
         await message.answer('Что-то пошло не так', reply_markup=basic_keyboard)
         await bot.send_message(chat_id=972753303, text=f'Произошла ошибка! Код 234\n{e}')
 
 
-@dp.message(F.content_type.in_({'text', 'photo'}), StateFilter(MemeStates.meme))
-async def send_meme_in_bot(message: Message, state: FSMContext):
-    await send_meme(message, state, 'in')
-
-
-@dp.message(F.content_type.in_({'text', 'photo'}), StateFilter(MemeStates.book))
-async def send_meme_in_bot(message: Message, state: FSMContext):
-    await send_meme(message, state, 'bo')
-
-
-@dp.message(StateFilter(MemeStates.demotivator))
-async def warning_demotivator(message: Message, state: FSMContext):
-    await message.answer('Это не похоже на текст к мему')
+@dp.message(F.content_type.in_({'text', 'photo'}))
+async def general_send_meme(message: Message):
+    user = await UserDB.get_user(message.from_user.id, message.from_user.username)
+    await send_meme(message, user)
 
 
 @dp.message()
-async def any_message(message: Message, state: FSMContext):
+async def any_message(message: Message):
     await message.answer(text=random.choice(hz_answers), reply_markup=basic_keyboard)
 
 

@@ -34,6 +34,7 @@ from apscheduler.triggers.cron import CronTrigger
 from dotenv import load_dotenv, find_dotenv
 from aiogram.client.session.aiohttp import AiohttpSession
 from mem_generator import create_meme
+from users_info import *
 import g4f
 
 load_dotenv(find_dotenv())
@@ -72,7 +73,7 @@ dice_points = {'🎲': 6, '🎯': 6, '🎳': 6, '🏀': 4, '⚽': 3, '🎰': 64}
 
 async def get_neuro_comment(message_text):
     response = gpt_client.chat.completions.create(
-        model='gpt-4',
+        model='gpt-3.5-turbo',
         messages=[{"role": "user",
                    "content": f"Представь, что ты гопник. Объясни, что такое {message_text}, но говоря как некомпетентный человек и в дворовом стиле"}],
     )
@@ -88,3 +89,18 @@ async def loading_indicator(chat_id, mes_id):
         await asyncio.sleep(1)
         cnt += 1
 
+
+class SetsCallBack(CallbackData, prefix="sets"):
+    action: int
+
+def get_keyboard(sets: UserDB):
+    array_buttons: list[list[InlineKeyboardButton]] = [[], [], [], []]
+    array_buttons[0].append(InlineKeyboardButton(text='Режим', callback_data=SetsCallBack(action=0).pack()))
+    array_buttons[1].append(InlineKeyboardButton(text='Цвет верхнего текста', callback_data=SetsCallBack(action=1).pack()))
+    array_buttons[1].append(InlineKeyboardButton(text='Цвет нижнего текста', callback_data=SetsCallBack(action=2).pack()))
+    array_buttons[2].append(InlineKeyboardButton(text='Контур верхнего текста', callback_data=SetsCallBack(action=3).pack()))
+    array_buttons[2].append(InlineKeyboardButton(text='Контур нижнего текста', callback_data=SetsCallBack(action=4).pack()))
+    array_buttons[3].append(InlineKeyboardButton(text='Регистр текста', callback_data=SetsCallBack(action=5).pack()))
+
+    markup = InlineKeyboardMarkup(inline_keyboard=array_buttons)
+    return markup
