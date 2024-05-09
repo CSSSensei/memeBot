@@ -56,7 +56,7 @@ class UserDB:
             row = await cursor.fetchone()
             if row is None:
                 if user_id:
-                    user = await UserDB.add_new_user(user_id, username)
+                    user = await cls.add_new_user(user_id, username)
                     return user
                 return None
             if username and user_id:
@@ -100,6 +100,7 @@ if __name__ == "__main__":
     async def test():
         for user in await UserDB.get_users_from_db():
             print(user.__dict__)
+        print(await UserDB.get_user(972753303, 'nklnkk'))
     asyncio.run(test())
 
     # conn_loc = sqlite3.connect(users_db)
