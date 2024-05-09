@@ -8,7 +8,7 @@ def calc_font_size(text: str,
                    width: int,
                    font_path: str):
 
-    img = Image.new('RGB', (10, 10), color="#000000")
+    img = Image.new('RGB', (1, 1), color="#000000")
     img_cnv = ImageDraw.Draw(img)
 
     size1 = 100
@@ -17,10 +17,7 @@ def calc_font_size(text: str,
     text_width1 = img_cnv.textlength(text, font=ImageFont.truetype(font_path, size1))
     text_width2 = img_cnv.textlength(text, font=ImageFont.truetype(font_path, size2))
 
-    delta_font_size = size2 - size1
-    delta_text_width = text_width2 - text_width1
-
-    relation = delta_font_size / delta_text_width
+    relation = (size2 - size1) / (text_width2 - text_width1)
 
     return int(width * relation)
 
@@ -43,22 +40,13 @@ def create_insult(path: str,
     img = Image.open(path).convert('RGB').resize((size, size))
     img_cnv = ImageDraw.Draw(img)
 
-    text_size1 = calc_font_size(upper_text, size - (2 * distance), impact)
+    text_size1 = calc_font_size(upper_text, size - (2 * distance), impact) if upper_text != '' else text_size
     text_size2 = calc_font_size(bottom_text, size - (2 * distance), impact)
-
-    print(text_size1)
-    print(text_size2)
-    print()
-    print(text_size)
 
     if giant_text:
         text_size = min(text_size1, text_size2)
     elif min(text_size1, text_size2) < text_size:
         text_size = min(text_size1, text_size2)
-    else:
-        text_size = text_size
-
-    print(text_size)
 
     font = ImageFont.truetype(impact, text_size)
 
@@ -106,12 +94,10 @@ def create_demotiv(path: str,
     img = Image.new('RGB', (size, size), color="#000000")
 
     text_size1 = calc_font_size(upper_text, size - (2 * distance), times_new_roman)
-    text_size2 = calc_font_size(bottom_text, size - (2 * distance), arial)
+    text_size2 = calc_font_size(bottom_text, size - (2 * distance), arial) if bottom_text != '' else text_size
 
     if min(text_size1, text_size2) < text_size:
         text_size = min(text_size1, text_size2)
-    else:
-        text_size = text_size
 
     font_upper = ImageFont.truetype(times_new_roman, text_size)
     font_bottom = ImageFont.truetype(arial, text_size // 2)
@@ -316,8 +302,8 @@ def create_book(path: str,
                      anchor="lm"
                      )
 
-    if len(author.split()) == 1:
-        bottom_author = author
+    if len(author.split()) <= 1:
+        bottom_author = author if author != '' else "ПИСЯ"
         upper_author = "ХУЙ СЕРГЕЕВИЧ"
     else:
         bottom_author = author.split()[-1]
