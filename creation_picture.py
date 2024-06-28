@@ -7,6 +7,7 @@ import os
 def calc_font_size(text: str,
                    width: int,
                    font_path: str):
+                   # height=0):
 
     img = Image.new('RGB', (1, 1), color="#000000")
     img_cnv = ImageDraw.Draw(img)
@@ -14,12 +15,21 @@ def calc_font_size(text: str,
     size1 = 100
     size2 = 200
 
-    text_width1 = img_cnv.textlength(text, font=ImageFont.truetype(font_path, size1))
-    text_width2 = img_cnv.textlength(text, font=ImageFont.truetype(font_path, size2))
+    bbox1 = img_cnv.textbbox((0, 0), text, font=ImageFont.truetype(font_path, size1, encoding='UTF-8'))
+    bbox2 = img_cnv.textbbox((0, 0), text, font=ImageFont.truetype(font_path, size2, encoding='UTF-8'))
 
-    relation = (size2 - size1) / (text_width2 - text_width1)
+    text_width1 = bbox1[2] - bbox1[0]
+    text_width2 = bbox2[2] - bbox2[0]
 
-    return int(width * relation)
+    # text_height2 = bbox2[3] - bbox2[1]
+    # text_height1 = bbox1[3] - bbox1[1]
+
+    relation_width = (size2 - size1) / (text_width2 - text_width1)
+    relation_width -= 0.01
+    print(relation_width)
+    # relation_height = (size2 - size1) / (text_height2 - text_height1)
+
+    return int(width * relation_width)
 
 
 def create_insult(path: str,
@@ -104,7 +114,6 @@ def create_demotiv(path: str,
 
     font_footnote = ImageFont.truetype(times_new_roman, 25)
 
-    # TODO:
     #  Отношение высоты буквы к размеру шрифта:
     #  Arial: 0.74
     #  Times New Roman: 0.68
@@ -196,17 +205,29 @@ def create_book(path: str,
     img = Image.new('RGB', (size, int(size * relation)), color=basic_color)
     img_cnv = ImageDraw.Draw(img)
 
+    # Верхний черный прямоугольник
     img_cnv.rectangle((distance,
                        distance - 2 * small_distance,
                        size - distance,
                        distance - small_distance),
                       fill="#000000")
 
+    # Нижний черный прямоугольник для надписи "русская классика"
     img_cnv.rectangle((distance,
                        img.height - (distance - 2 * small_distance) - descriptor_line_width,
                        img.width - distance,
                        img.height - (distance - 2 * small_distance)),
                       fill="#000000")
+
+    font_descriptor = ImageFont.truetype(myriad_pro_bold, 18)
+    for i in range(len(descriptor) + 1):
+        img_cnv.text((distance + int((size - (distance * 2)) * (i / (len(descriptor) + 1))),
+                      img.height - (distance - 2 * small_distance) - descriptor_line_width // 2),
+                     f' {descriptor}'[i],
+                     font=font_descriptor,
+                     fill=basic_color,
+                     anchor="mm"
+                     )
 
     annotation_size = random.randint(90, 140)
     font_annotation = ImageFont.truetype(myriad_pro_cond_italic, 19)
@@ -220,6 +241,7 @@ def create_book(path: str,
         position_l_title = distance
         position_r_title = img.width - int(2 * distance) - 153
 
+    # Прямоугольник для названия (около "Книги, изменившие мир.")
     img_cnv.rectangle((position_l_title,
                        img.height - (distance - small_distance) - descriptor_line_width - annotation_size,
                        position_r_title,
@@ -351,16 +373,6 @@ def create_book(path: str,
                        size - distance,
                        distance + img_past.height + 2 * small_distance),
                       fill="#000000")
-
-    font_descriptor = ImageFont.truetype(myriad_pro_bold, 18)
-    for i in range(len(f'+{descriptor}')):
-        img_cnv.text((distance + int(img_past.width * (i / len(f'+{descriptor}'))),
-                      img.height - (distance - 2 * small_distance) - descriptor_line_width // 2),
-                     f' {descriptor}'[i],
-                     font=font_descriptor,
-                     fill=basic_color,
-                     anchor="mm"
-                     )
 
     # Чтобы было удобно считать, определяем новый «нуль» (Относительно низа картинки)
     zero_below_img = distance + img_past.height + 3 * small_distance

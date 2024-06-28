@@ -142,7 +142,7 @@ async def create_meme(path_img: str = None,
                       mode='in',  # in, de, bo
                       upper_color='W',
                       bottom_color='W',
-                      upper_stroke_color='-N',  # Тут нет ошибки!
+                      upper_stroke_color='-N',   # Тут нет ошибки!
                       bottom_stroke_color='-N',  # '-N' — это код стандартного цвета (чёрного)
                       stroke_width=3,
                       giant_text=False):
@@ -257,17 +257,18 @@ async def create_meme(path_img: str = None,
 if __name__ == '__main__':
     asyncio.run(
         create_meme(
-            path_img="pictures/1.jpg",
-            bottom_text="о88888888тли чны68888866йп",
+            # path_img="pictures/1.jpg",
+            path_img=None,
+            bottom_text="я оказывается пассивный латентный гетеросексуал",
             # bottom_text="1985",
             # bottom_text="Горе от ума",
             # bottom_text="Вероника решает умереть",
             # upper_text="Пауло коэльо",
             # upper_text="Ирвин жопэ Шоу",
             # upper_text="Харпер ли",
-            # upper_text="александр сергеевич грибоедов",
+            upper_text="гей",
             # upper_text="Хуй сергеевич",
-            upper_text=None,
+            # upper_text=None,
             search_text=None,
             mode='bo',
             upper_color='#588157',
