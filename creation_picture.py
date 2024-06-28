@@ -53,9 +53,12 @@ def create_insult(path: str,
     text_size1 = calc_font_size(upper_text, size - (2 * distance), impact) if upper_text != '' else text_size
     text_size2 = calc_font_size(bottom_text, size - (2 * distance), impact)
 
-    if giant_text:
+    if min(text_size1, text_size2) < text_size:
         text_size = min(text_size1, text_size2)
-    elif min(text_size1, text_size2) < text_size:
+
+    if giant_text and upper_text != '':
+        text_size = text_size2
+    elif giant_text:
         text_size = min(text_size1, text_size2)
 
     font = ImageFont.truetype(impact, text_size)
