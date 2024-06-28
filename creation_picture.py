@@ -26,7 +26,6 @@ def calc_font_size(text: str,
 
     relation_width = (size2 - size1) / (text_width2 - text_width1)
     relation_width -= 0.01
-    print(relation_width)
     # relation_height = (size2 - size1) / (text_height2 - text_height1)
 
     return int(width * relation_width)
@@ -56,7 +55,7 @@ def create_insult(path: str,
     if min(text_size1, text_size2) < text_size:
         text_size = min(text_size1, text_size2)
 
-    if giant_text and upper_text != '':
+    if giant_text and upper_text == '':
         text_size = text_size2
     elif giant_text:
         text_size = min(text_size1, text_size2)

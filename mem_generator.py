@@ -166,7 +166,8 @@ async def create_meme(path_img: str = None,
         mem_search_text = await take_from_db()
 
     if upper_text:
-        mem_upper_text = upper_text
+        mem_upper_text = mem_bottom_text
+        mem_bottom_text = upper_text
     elif bottom_text:
         mem_upper_text = ''
     else:

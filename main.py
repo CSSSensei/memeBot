@@ -49,7 +49,6 @@ from config import *
 #  Послесловие я к тебе в функции не лез и ты не лезь пж
 
 
-
 class explain_blyat(BaseFilter):
     async def __call__(self, message: Message) -> bool:
         required = 'поясни за '
@@ -138,17 +137,20 @@ async def create_demo_command(message: Message):
 
 
 @dp.message(F.text == 'Настройки')
-async def settings_handler(message: Message):
-    settings = await UserDB.get_user(message.from_user.id, message.from_user.username)
+async def settings_handler(message: Message, edit=False):
+    user = await UserDB.get_user(message.from_user.id, message.from_user.username)
 
     txt = ('<b>Твои текущие настройки</b>\n\n'
-           f'Режим: <i>{settings.mode}</i>\n'
-           f'Цвет верхнего текста: <i>{settings.upper_color}</i>\n'
-           f'Цвет нижнего текста: <i>{settings.bottom_color}</i>\n'
-           f'Контур верхнего текста: <i>{settings.upper_stroke_color}</i>\n'
-           f'Контур нижнего текста: <i>{settings.bottom_stroke_color}</i>\n'
-           f'Регистр текста: <i>{settings.giant_text}</i>\n')
-    await message.answer(txt, reply_markup=get_keyboard(settings))
+           f'Режим: <i><b>{modes_name[user.mode][0]}</b></i>\n'
+           f'Цвет верхнего текста: <i><u>{get_colorname_by_hashcode(user.upper_color)}</u></i>\n'
+           f'Цвет нижнего текста: <i><u>{get_colorname_by_hashcode(user.bottom_color)}</u></i>\n'
+           f'Контур верхнего текста: <i><u>{get_colorname_by_hashcode(user.upper_stroke_color)}</u></i>\n'
+           f'Контур нижнего текста: <i><u>{get_colorname_by_hashcode(user.bottom_stroke_color)}</u></i>\n'
+           f'Регистр текста: <i>{"<b>БАЛЬШИЕ БУКАВЫ</b>" if user.giant_text else "маленькие буковки"}</i>\n')
+    if edit:
+        await message.edit_text(txt, reply_markup=get_keyboard(user))
+    else:
+        await message.answer(txt, reply_markup=get_keyboard(user))
 
 
 @dp.message(F.text == 'Демотиватор')
@@ -164,7 +166,7 @@ async def set_meme(message: Message):
 
 
 @dp.message(F.text == 'Чтиво')
-async def set_book(message: Message,):
+async def set_book(message: Message, ):
     await UserDB.change_mode(message.from_user.id, 'bo')
     await message.answer('Режим изменён на <b>чтиво</b>', reply_markup=basic_keyboard)
 
@@ -180,7 +182,7 @@ async def send_meme(message: Message, user: UserDB, mode=None):
         if message.photo:
             photo_path = f'{os.path.dirname(__file__)}/pictures/photo{random.randint(1, 10 ** 8)}.jpg'
             await bot.download_file((await bot.get_file(message.photo[-1].file_id)).file_path, photo_path)
-            meme_txt = [None] + meme_txt
+
         try:
             meme_path = await create_meme(photo_path, *meme_txt,
                                           mode=mode if mode else user.mode,
@@ -198,6 +200,83 @@ async def send_meme(message: Message, user: UserDB, mode=None):
     except Exception as e:
         await message.answer('Что-то пошло не так', reply_markup=basic_keyboard)
         await bot.send_message(chat_id=972753303, text=f'Произошла ошибка! Код 234\n{e}')
+
+
+@dp.callback_query(SetsCallBack.filter())
+async def settings_button_distributor(callback: CallbackQuery, callback_data: SetsCallBack):
+    action = callback_data.action
+    user = await UserDB.get_user(callback.from_user.id, callback.from_user.username)
+
+    async def user_mode(user):
+        current_mode_name = f"У вас включен режим: <b>{modes_name[user.mode][0]}</b>"
+        await callback.message.edit_text(current_mode_name, reply_markup=get_mode_keyboard(user.mode))
+
+    async def color_mode(user, action):
+        txt = ''
+        mode_offset = 1
+        current_color = '#000000'
+        if action == UPPERTEXT_ACTION:
+            txt = 'верхнего текста'
+            mode_offset = 1
+            current_color = user.upper_color
+        elif action == BOTTOMTEXT_ACTION:
+            txt = 'нижнего текста'
+            mode_offset = 10
+            current_color = user.bottom_color
+        elif action == UPPERSTROKE_ACTION:
+            txt = 'контура верхнего текста'
+            mode_offset = 100
+            current_color = user.upper_stroke_color
+        elif action == BOTTOMSTROKE_ACTION:
+            txt = 'контура нижнего текста'
+            mode_offset = 1000
+            current_color = user.bottom_stroke_color
+        await callback.message.edit_text(f'Выберите цвет <i>{txt}</i> или введите его с клавиатуры',
+                                         reply_markup=get_color_keyboard(current_color, mode_offset))
+
+    async def text_case_mode(user):
+        await callback.message.edit_text(f'Сейчас стоят {"<b>БАЛЬШИЕ БУКАВЫ</b>" if user.giant_text else "<i>маленькие буковки</i>"}',
+                                         reply_markup=get_case_keyboard(user.giant_text))
+
+    if user is None:
+        await callback.message.answer('Произошла ошибка!')
+
+    if action == USERMODE_ACTION:
+        await user_mode(user)
+
+    if action in MODE_CODES_set:
+        await UserDB.change_mode(callback.from_user.id, get_mode_name_by_code(action))
+        user = await UserDB.get_user(callback.from_user.id, callback.from_user.username)
+        await user_mode(user)
+
+    if action == SETTINGS_ACTION:
+        await settings_handler(callback.message, True)
+
+    if action in (UPPERTEXT_ACTION, BOTTOMTEXT_ACTION, UPPERSTROKE_ACTION, BOTTOMSTROKE_ACTION):
+        await color_mode(user, action)
+
+    if action in COLOR_CODES_set:
+        color_places = ('upper_color', 'bottom_color', 'upper_stroke_color', 'bottom_stroke_color')
+        offsets = {1000: 3, 100: 2, 10: 1}
+
+        for div, idx in offsets.items():
+            if action % div == 0:
+                color_place = color_places[idx]
+                offset = div
+                break
+        else:
+            color_place = color_places[0]
+            offset = 1
+
+        await UserDB.change_color(callback.from_user.id, get_colorhash_by_code(action // offset), color_place)
+        user = await UserDB.get_user(callback.from_user.id, callback.from_user.username)
+        await user_mode(user)
+    if action == TEXTCASE_ACTION:
+        await text_case_mode(user)
+    if action in (SETgiantcase, SETsmallcase):
+        await UserDB.change_text_case(callback.from_user.id, True if action == SETgiantcase else False)
+        user = await UserDB.get_user(callback.from_user.id, callback.from_user.username)
+        await text_case_mode(user)
 
 
 @dp.message(F.content_type.in_({'text', 'photo'}))
