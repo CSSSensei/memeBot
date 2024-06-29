@@ -197,12 +197,12 @@ async def create_meme(path_img: str = None,
             mem_upper_text = bottom_text
             mem_bottom_text = ''
 
-        if upper_stroke_color != '-N':
-            stroke_color = upper_stroke_color
-        elif bottom_stroke_color != '-N':
-            stroke_color = bottom_stroke_color
-        else:
-            stroke_color = 'W'
+        # if upper_stroke_color != '-N':
+        #     stroke_color = upper_stroke_color
+        # elif bottom_stroke_color != '-N':
+        #     stroke_color = bottom_stroke_color
+        # else:
+        stroke_color = 'W'
 
         path_mem = create_demotiv(path=mem_path_img,
                                   upper_text=mem_upper_text,
@@ -218,6 +218,11 @@ async def create_meme(path_img: str = None,
     elif mode == 'bo':
         upper_stroke_color = random_color4book()
         bottom_stroke_color = random_color4book()
+
+        # if upper_stroke_color == '-N':
+        #     upper_stroke_color = random_color4book()
+        # if bottom_stroke_color == '-N':
+        #     bottom_stroke_color = random_color4book()
 
         logo_backing_color = choice([
             '#fdd260', '#eb8924', '#79a4aa',
