@@ -3,9 +3,10 @@ import sqlite3
 import json
 from typing import Dict, List, Optional
 import aiosqlite
+import os
 from mem_generator import decoding_color
 
-users_db = 'users.db'
+users_db = f'{os.path.dirname(__file__)}/DB/users.db'
 conn_loc = sqlite3.connect(users_db)
 cursor_loc = conn_loc.cursor()
 
@@ -18,7 +19,7 @@ cursor_loc.close()
 conn_loc.close()
 
 
-# TODO сделать сохранение запросов в БД
+# TODO сделать сохранение запросов в БД (шпионская схема ПОСТАВИТЬ КАМЕРУ В КОМНАТУ ПЕНИСА ФАЗАЛОВА)
 
 class UserDB:
     def __init__(self, user_id, username=None, mode='in', banned=False, premium=False, upper_color='#FFFFFF', bottom_color='#FFFFFF',
