@@ -19,15 +19,9 @@
 #         ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠷⣶⣤⣀⠀⠀⠈⠉⠉⠒⠒⠒⠒⠐⠠⠦⠴⠤⠴⠤⠴⠒⠉⠀⠀⠀  ⣼⡇⠀⠀
 #         ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠛⠿⣶⣦⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀   ⣠⣾⠏⠀⠀⠀
 #         ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠙⠛⠻⠷⠶⢶⣦⣤⣤⣤⣤⣤⡴⠶⠟⠋⠁⠀⠀⠀⠀
-import os
-import random
-
 from config import *
 
 
-# TODO: В функции create_meme (mem_generator.py) появилось много параметров.
-#  Все эти параметры полностью защищены (Можешь отсылать любые значения, если они не подойдут она их выправит)
-#  ОБРАТИ ВНИМАНИЕ, ЧТО ПОРЯДОК ПЕРЕМЕННЫХ ПОМЕНЯЛСЯ!!!
 # Старые параметры, которые ты знаешь:
 #  path_img
 #  bottom_text
@@ -43,10 +37,6 @@ from config import *
 #  giant_text булевое значение
 #  В цветовые параметры можно отсылать буковки (F, P, R, M, Y, O, L, G, A, T, B, N, W)
 #  или хеш код (#c1121f) хеш обязателен, по нему она определяет, что это не буковка
-# TODO:
-#  В общем удачи, я тебе дал функцию, ебись с ней как хочешь (Не забудь скачать assets из тг)
-#
-#  Послесловие я к тебе в функции не лез и ты не лезь пж
 
 
 class explain_blyat(BaseFilter):
@@ -104,7 +94,9 @@ async def delete_pictures_in_directory(message: Message):
 @dp.message(CommandStart())
 async def process_start_command(message: Message):
     await UserDB.add_new_user(message.from_user.id, message.from_user.username)
-    await message.answer('Здарова! Тут ты можешь подавить лыбу 🤣🤣🤣\n\nТыкай на <b>/help</b> чтобы узнать, как пользоваться хи-хи ха-ха ботом 👍', reply_markup=basic_keyboard)
+    await message.answer(
+        'Здарова! Тут ты можешь подавить лыбу 🤣🤣🤣\n\nТыкай на <b>/help</b> чтобы узнать, как пользоваться хи-хи ха-ха ботом 👍',
+        reply_markup=basic_keyboard)
 
 
 @dp.message(Command(commands='meme'))
@@ -140,6 +132,18 @@ async def create_demo_command(message: Message):
     await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='de')
 
 
+@dp.message(Command(commands='query'))
+async def query_command(message: Message):
+    txt = ''
+    for user in await UserQueryDB.get_last_queries(10):
+        username = (await UserDB.get_user(user.user_id)).username
+        txt += f'<i>{username if username else user.user_id}</i> — {", ".join(f"[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>«{query}»</blockquote>" for unix_time, query in user.queries.items())}\n\n'
+    if len(txt) != 0:
+        await message.answer(txt)
+    else:
+        await message.answer('Запросов не было')
+
+
 @dp.message(Command(commands='book'))
 async def create_demo_command(message: Message):
     await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='bo')
@@ -148,8 +152,8 @@ async def create_demo_command(message: Message):
 @dp.message(F.text == 'Настройки')
 async def settings_handler(message: Message, edit=False, user_id=None):
     user = await UserDB.get_user(user_id if user_id else message.from_user.id, message.from_user.username)
-#                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-#                                          <--         phasalo          -->
+    #                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    #                                          <--         phasalo          -->
 
     txt = ('<b>Твои текущие настройки</b>\n\n'
            f'Режим: <i><b>{modes_name[user.mode][0]}</b></i>\n'
@@ -187,6 +191,7 @@ async def send_meme(message: Message, user: UserDB, mode=None):
         if message.text is None and message.caption is None:
             await message.answer('Ты забыл про надпись')
             return
+        await UserQueryDB.add_new_query(user.user_id, int(time.time()), message.text)
         meme_txt = (message.text if message.text else message.caption).strip().split('\n')
         meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
         photo_path = None
@@ -262,7 +267,6 @@ async def settings_button_distributor(callback: CallbackQuery, callback_data: Se
 
     if action == SETTINGS_ACTION:
         await settings_handler(callback.message, True, callback.from_user.id)
-        #print(callback.message)
     if action in (UPPERTEXT_ACTION, BOTTOMTEXT_ACTION, UPPERSTROKE_ACTION, BOTTOMSTROKE_ACTION):
         await color_mode(user, action)
 
