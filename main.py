@@ -268,20 +268,22 @@ async def settings_button_distributor(callback: CallbackQuery, callback_data: Se
 
     if action in COLOR_CODES_set:
         color_places = ('upper_color', 'bottom_color', 'upper_stroke_color', 'bottom_stroke_color')
+        color_codes = (UPPERTEXT_ACTION, BOTTOMTEXT_ACTION, UPPERSTROKE_ACTION, BOTTOMSTROKE_ACTION)
         offsets = {1000: 3, 100: 2, 10: 1}
-
         for div, idx in offsets.items():
             if action % div == 0:
                 color_place = color_places[idx]
+                command_name = color_codes[idx]
                 offset = div
                 break
         else:
             color_place = color_places[0]
+            command_name = color_codes[0]
             offset = 1
 
         await UserDB.change_color(callback.from_user.id, get_colorhash_by_code(action // offset), color_place)
         user = await UserDB.get_user(callback.from_user.id, callback.from_user.username)
-        await user_mode(user)
+        await color_mode(user, command_name)
     if action == TEXTCASE_ACTION:
         await text_case_mode(user)
     if action in (SETgiantcase, SETsmallcase):

@@ -3,9 +3,10 @@ import sqlite3
 import json
 from typing import Dict, List, Optional
 import aiosqlite
+import os
 from mem_generator import decoding_color
 
-users_db = 'users.db'
+users_db = f'{os.path.dirname(__file__)}/DB/users.db'
 conn_loc = sqlite3.connect(users_db)
 cursor_loc = conn_loc.cursor()
 
