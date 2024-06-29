@@ -216,11 +216,8 @@ async def create_meme(path_img: str = None,
                                   distance=distance)
 
     elif mode == 'bo':
-
-        if upper_stroke_color == '-N':
-            upper_stroke_color = random_color4book()
-        if bottom_stroke_color == '-N':
-            bottom_stroke_color = random_color4book()
+        upper_stroke_color = random_color4book()
+        bottom_stroke_color = random_color4book()
 
         logo_backing_color = choice([
             '#fdd260', '#eb8924', '#79a4aa',
