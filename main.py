@@ -78,7 +78,7 @@ async def process_start_command(message: Message):
 
 @dp.message(Command(commands='meme'))
 async def send_meme_lmao(message: Message):
-    await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='in')
+    await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='in', city_meme=True)
 
 
 @dp.message(Command(commands='help'))
@@ -106,7 +106,7 @@ async def help_command(message: Message):
 
 @dp.message(Command(commands='deme'))
 async def create_demo_command(message: Message):
-    await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='de')
+    await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='de', city_meme=True)
 
 
 @dp.message(Command(commands='query'), F.from_user.id.in_(ADMINS))  # /query
@@ -230,7 +230,7 @@ async def set_book(message: Message, ):
     await message.answer('Режим изменён на <b>чтиво</b>', reply_markup=basic_keyboard)
 
 
-async def send_meme(message: Message, user: UserDB, mode=None):
+async def send_meme(message: Message, user: UserDB, mode=None, city_meme=False):
     try:
         if message.text is None and message.caption is None:
             await message.answer('Ты забыл про надпись')
@@ -239,6 +239,8 @@ async def send_meme(message: Message, user: UserDB, mode=None):
         meme_txt = (message.text if message.text else message.caption).strip().split('\n')
         meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
         photo_path = None
+        if city_meme:
+            meme_txt = [None, None, None]
         if message.photo:
             photo_path = f'{os.path.dirname(__file__)}/pictures/photo{random.randint(1, 10 ** 8)}.jpg'
             await bot.download_file((await bot.get_file(message.photo[-1].file_id)).file_path, photo_path)
