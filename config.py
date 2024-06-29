@@ -8,6 +8,7 @@ import time
 import shutil
 import aiohttp
 import aiofiles
+import re
 
 import aiogram.utils.chat_action
 
@@ -46,6 +47,7 @@ BOTTOMSTROKE_ACTION = 4
 TEXTCASE_ACTION = 5
 SETsmallcase = 6
 SETgiantcase = 7
+ADMINS = (972753303, 735273809)
 
 load_dotenv(find_dotenv())
 
@@ -215,6 +217,15 @@ def get_case_keyboard(giant: bool):
     array_buttons.append([InlineKeyboardButton(text='Назад', callback_data=SetsCallBack(action=SETTINGS_ACTION).pack())])
     markup = InlineKeyboardMarkup(inline_keyboard=array_buttons)
     return markup
+
+
+def find_first_number(input_string):
+    match = re.search(r'\d+', input_string)
+
+    if match:
+        return match.group()
+    else:
+        return None
 
 
 if __name__ == '__main__':

@@ -1,4 +1,3 @@
-import os
 import re
 from random import choice, shuffle
 import asyncio

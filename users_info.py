@@ -153,7 +153,7 @@ class UserQueryDB:
                 "SELECT timestamp, query FROM UserQueries WHERE user_id = ?", (user_id,)
             )
             rows: Union[list[tuple[int, str]], None] = await cursor.fetchall()
-            queries: Union[Dict[int, str], None] = {row[0]: row[1] for row in rows} if rows else None
+            queries: Dict[int, str] = {row[0]: row[1] for row in rows}
             return cls(user_id, queries)
 
     @classmethod

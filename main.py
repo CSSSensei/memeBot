@@ -22,33 +22,10 @@
 from config import *
 
 
-# Старые параметры, которые ты знаешь:
-#  path_img
-#  bottom_text
-#  upper_text
-#  search_text
-#  mode
-# Новые параметры
-#  upper_color строка цвет
-#  bottom_color строка цвет
-#  upper_stroke_color строка цвет
-#  bottom_stroke_color строка цвет
-#  stroke_width целое число
-#  giant_text булевое значение
-#  В цветовые параметры можно отсылать буковки (F, P, R, M, Y, O, L, G, A, T, B, N, W)
-#  или хеш код (#c1121f) хеш обязателен, по нему она определяет, что это не буковка
-
-
-class explain_blyat(BaseFilter):
+class ExplainBlyat(BaseFilter):
     async def __call__(self, message: Message) -> bool:
         required = 'поясни за '
         return message.text[0:len(required)].lower() == required
-
-
-# class MemeStates(StatesGroup):
-#     demotivator = State()
-#     meme = State()
-#     book = State()
 
 
 meme_button: KeyboardButton = KeyboardButton(
@@ -63,7 +40,7 @@ basic_keyboard: ReplyKeyboardMarkup = ReplyKeyboardMarkup(
     keyboard=[[meme_button, demotivator_button], [book_button, settings_button]], resize_keyboard=True)
 
 
-@dp.message(F.text, explain_blyat())
+@dp.message(F.text, ExplainBlyat())
 async def explain_func(message: Message):
     required = 'поясни за '
     txt = message.text[len(required):]
@@ -132,16 +109,83 @@ async def create_demo_command(message: Message):
     await send_meme(message, user=await UserDB.get_user(message.from_user.id, message.from_user.username), mode='de')
 
 
-@dp.message(Command(commands='query'))
+@dp.message(Command(commands='query'), F.from_user.id.in_(ADMINS))  # /query
 async def query_command(message: Message):
     txt = ''
-    for user in await UserQueryDB.get_last_queries(10):
+    amount = find_first_number(message.text)
+    if not amount:
+        amount = 5
+    for user in await UserQueryDB.get_last_queries(amount):
         username = (await UserDB.get_user(user.user_id)).username
-        txt += f'<i>{username if username else user.user_id}</i> — {", ".join(f"[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>«{query}»</blockquote>" for unix_time, query in user.queries.items())}\n\n'
+        line = (f'<i>{username if username else user.user_id}</i> — '
+                f'{", ".join(f"[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>«{query}»</blockquote>" for unix_time, query in user.queries.items())}\n\n')
+        if len(line) + len(txt) < 4096:
+            txt += line
+        else:
+            try:
+                await message.answer(text=txt)
+            except Exception as e:
+                await message.answer(text=f'Произошла ошибка!\n{e}')
+            txt = line
     if len(txt) != 0:
         await message.answer(txt)
     else:
         await message.answer('Запросов не было')
+
+
+@dp.message(Command(commands='get_users'), F.from_user.id.in_(ADMINS))  # /get_users
+async def users_command(message: Message):
+    users = await UserDB.get_users_from_db()
+    txt = f'Всего пользователей: <b>{len(users)}</b>\n\n'
+    for user in users:
+        memes_amount = len((await UserQueryDB.get_user_queries(user.user_id)).queries)
+        emoji = '😐'
+        if memes_amount > 10:
+            emoji = '🤣'
+        elif memes_amount > 0:
+            emoji = '😂'
+        line = (f'<b>{"@" + user.username if user.username else "🐸"}</b> | <i>{user.user_id}</i> |' + (' 💀 |' if user.banned else '') +
+                (' 👑 |' if user.premium else '') + f' {emoji} {memes_amount}\n')
+        if len(line) + len(txt) < 4096:
+            txt += line
+        else:
+            try:
+                await message.answer(text=txt)
+            except Exception as e:
+                await message.answer(text=f'Произошла ошибка!\n{e}')
+            txt = line
+    if len(txt) != 0:
+        await message.answer(txt)
+
+
+@dp.message(Command(commands='user_query'), F.from_user.id.in_(ADMINS))  # /user_query
+async def user_query_command(message: Message):
+    user_id = find_first_number(message.text)
+    query = (await UserQueryDB.get_user_queries(user_id)).queries
+    if not user_id or not query:
+        await message.answer('Неправильный <i>user_id</i> или этот пользователь не отправлял запросы')
+        return
+    txt = ''
+    for unix_time, text in query.items():
+        line = f'[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>{text}</blockquote>\n\n'
+        if len(line) + len(txt) < 4096:
+            txt += line
+        else:
+            try:
+                await message.answer(text=txt)
+            except Exception as e:
+                await message.answer(text=f'Произошла ошибка!\n{e}')
+            txt = line
+    if len(txt) != 0:
+        await message.answer(txt)
+
+
+@dp.message(Command(commands='getcoms'), F.from_user.id.in_(ADMINS))  # /getcoms
+async def all_commands(message: Message):
+    await message.answer('/help\n'
+                         '/get_users\n'
+                         '/query <i>(int)</i>\n'
+                         '/user_query <i>(user_id)</i>')
 
 
 @dp.message(Command(commands='book'))
@@ -223,36 +267,36 @@ async def settings_button_distributor(callback: CallbackQuery, callback_data: Se
     action = callback_data.action
     user = await UserDB.get_user(callback.from_user.id, callback.from_user.username)
 
-    async def user_mode(user):
-        current_mode_name = f"У вас включен режим: <b>{modes_name[user.mode][0]}</b>"
-        await callback.message.edit_text(current_mode_name, reply_markup=get_mode_keyboard(user.mode))
+    async def user_mode(user_loc):
+        current_mode_name = f"У вас включен режим: <b>{modes_name[user_loc.mode][0]}</b>"
+        await callback.message.edit_text(current_mode_name, reply_markup=get_mode_keyboard(user_loc.mode))
 
-    async def color_mode(user, action):
+    async def color_mode(user_loc, action_loc):
         txt = ''
         mode_offset = 1
         current_color = '#000000'
-        if action == UPPERTEXT_ACTION:
+        if action_loc == UPPERTEXT_ACTION:
             txt = 'верхнего текста'
             mode_offset = 1
-            current_color = user.upper_color
-        elif action == BOTTOMTEXT_ACTION:
+            current_color = user_loc.upper_color
+        elif action_loc == BOTTOMTEXT_ACTION:
             txt = 'нижнего текста'
             mode_offset = 10
-            current_color = user.bottom_color
-        elif action == UPPERSTROKE_ACTION:
+            current_color = user_loc.bottom_color
+        elif action_loc == UPPERSTROKE_ACTION:
             txt = 'контура верхнего текста'
             mode_offset = 100
-            current_color = user.upper_stroke_color
-        elif action == BOTTOMSTROKE_ACTION:
+            current_color = user_loc.upper_stroke_color
+        elif action_loc == BOTTOMSTROKE_ACTION:
             txt = 'контура нижнего текста'
             mode_offset = 1000
-            current_color = user.bottom_stroke_color
+            current_color = user_loc.bottom_stroke_color
         await callback.message.edit_text(f'Выберите цвет <i>{txt}</i> или введите его с клавиатуры',
                                          reply_markup=get_color_keyboard(current_color, mode_offset))
 
-    async def text_case_mode(user):
-        await callback.message.edit_text(f'Сейчас стоят {"<b>БАЛЬШИЕ БУКАВЫ</b>" if user.giant_text else "<i>маленькие буковки</i>"}',
-                                         reply_markup=get_case_keyboard(user.giant_text))
+    async def text_case_mode(user_loc):
+        await callback.message.edit_text(f'Сейчас стоят {"<b>БАЛЬШИЕ БУКАВЫ</b>" if user_loc.giant_text else "<i>маленькие буковки</i>"}',
+                                         reply_markup=get_case_keyboard(user_loc.giant_text))
 
     if user is None:
         await callback.message.answer('Произошла ошибка!')
