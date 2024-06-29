@@ -18,7 +18,7 @@ cursor_loc.close()
 conn_loc.close()
 
 
-# TODO сделать сохранение запросов в БД
+# TODO сделать сохранение запросов в БД (шпионская схема ПОСТАВИТЬ КАМЕРУ В КОМНАТУ ПЕНИСА ФАЗАЛОВА)
 
 class UserDB:
     def __init__(self, user_id, username=None, mode='in', banned=False, premium=False, upper_color='#FFFFFF', bottom_color='#FFFFFF',

@@ -104,7 +104,7 @@ async def delete_pictures_in_directory(message: Message):
 @dp.message(CommandStart())
 async def process_start_command(message: Message):
     await UserDB.add_new_user(message.from_user.id, message.from_user.username)
-    await message.answer('Привет! В этом боте ты можешь сгенерировать мем или демотиватор!', reply_markup=basic_keyboard)
+    await message.answer('Здарова! Тут ты можешь подавить лыбу 🤣🤣🤣\n\nТыкай на <b>/help</b> чтобы узнать, как пользоваться хи-хи ха-ха ботом 👍', reply_markup=basic_keyboard)
 
 
 @dp.message(Command(commands='meme'))
@@ -114,16 +114,25 @@ async def send_meme_lmao(message: Message):
 
 @dp.message(Command(commands='help'))
 async def help_command(message: Message):
-    await message.answer('<b>Помощь калекам</b>\nДля создания реальной ржаки, тебе нужно нажать на кнопочки снизу (Выбрать шаблон)\n'
-                         'Далее пишешь: запрос на картинку, текст сверху и текст снизу. Всё с новой строчки!\n\n'
-                         '<b>Пример</b>\n'
-                         '<blockquote>Камчатка\n'
-                         'Сочи\n'
-                         'Вы ебанутые?</blockquote>\n\n'
-                         'Так же ты можешь прислать фотку и подписать её верхним и нижним текстом\n\n'
-                         '<b>Пример</b> (Подпись к фотке)\n'
-                         '<blockquote>Сочи\n'
-                         'Вы ебанутые?</blockquote>', reply_markup=basic_keyboard)
+    await message.answer('<b>Помощь калекам</b>\n'
+                         'Для создания реальной ржаки, тебе нужно нажать на кнопочки снизу (Выбрать шаблон)\n\n'
+                         '<i><b>«Мемас» и «демотиватор»</b></i>\n'
+                         'Пишешь текст сверху, текст снизу и запрос на картинку. Всё с новой строчки! Запрос на картинку пиши, как будто в гугле картинку ищешь\n'
+                         '<blockquote>{Надпись сверху}\n'
+                         '{Надпись снизу}\n'
+                         '{Запрос на картинку}</blockquote>\n\n'
+                         'Так же ты можешь прислать фотку вместо запроса и подписать её: текст сверху и текст снизу'
+                         '<blockquote>{Надпись сверху}\n'
+                         '{Надпись снизу}</blockquote>\n\n'
+                         'Можно не присылать два текста'
+                         '<blockquote>{Надпись}\n'
+                         '{Запрос на картинку}</blockquote>\n\n'
+                         'Или вообще одну надпись'
+                         '<blockquote>{Надпись}</blockquote>\n\n'
+                         '<i><b>«Чтиво»</b></i>'
+                         '<blockquote>{Автор}\n'
+                         '{Название}\n'
+                         '{Запрос на картинку}</blockquote>', reply_markup=basic_keyboard)
 
 
 @dp.message(Command(commands='deme'))
@@ -137,8 +146,10 @@ async def create_demo_command(message: Message):
 
 
 @dp.message(F.text == 'Настройки')
-async def settings_handler(message: Message, edit=False):
-    user = await UserDB.get_user(message.from_user.id, message.from_user.username)
+async def settings_handler(message: Message, edit=False, user_id=None):
+    user = await UserDB.get_user(user_id if user_id else message.from_user.id, message.from_user.username)
+#                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#                                          <--         phasalo          -->
 
     txt = ('<b>Твои текущие настройки</b>\n\n'
            f'Режим: <i><b>{modes_name[user.mode][0]}</b></i>\n'
@@ -250,8 +261,8 @@ async def settings_button_distributor(callback: CallbackQuery, callback_data: Se
         await user_mode(user)
 
     if action == SETTINGS_ACTION:
-        await settings_handler(callback.message, True)
-
+        await settings_handler(callback.message, True, callback.from_user.id)
+        #print(callback.message)
     if action in (UPPERTEXT_ACTION, BOTTOMTEXT_ACTION, UPPERSTROKE_ACTION, BOTTOMSTROKE_ACTION):
         await color_mode(user, action)
 
