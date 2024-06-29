@@ -139,10 +139,10 @@ async def create_meme(path_img: str = None,
                       upper_text: str = None,
                       search_text: str = None,
                       mode='in',  # in, de, bo
-                      upper_color='W',
-                      bottom_color='W',
-                      upper_stroke_color='-N',   # Тут нет ошибки!
-                      bottom_stroke_color='-N',  # '-N' — это код стандартного цвета (чёрного)
+                      upper_color='#FFFFFF',
+                      bottom_color='#FFFFFF',
+                      upper_stroke_color='#000000',
+                      bottom_stroke_color='#000000',
                       stroke_width=3,
                       giant_text=False):
     size = 1000
@@ -196,12 +196,12 @@ async def create_meme(path_img: str = None,
             mem_upper_text = bottom_text
             mem_bottom_text = ''
 
-        # if upper_stroke_color != '-N':
-        #     stroke_color = upper_stroke_color
-        # elif bottom_stroke_color != '-N':
-        #     stroke_color = bottom_stroke_color
-        # else:
-        stroke_color = 'W'
+        if upper_stroke_color != '#000000':
+            stroke_color = upper_stroke_color
+        elif bottom_stroke_color != '#000000':
+            stroke_color = bottom_stroke_color
+        else:
+            stroke_color = '#FFFFFF'
 
         path_mem = create_demotiv(path=mem_path_img,
                                   upper_text=mem_upper_text,
@@ -218,10 +218,10 @@ async def create_meme(path_img: str = None,
         upper_stroke_color = random_color4book()
         bottom_stroke_color = random_color4book()
 
-        # if upper_stroke_color == '-N':
-        #     upper_stroke_color = random_color4book()
-        # if bottom_stroke_color == '-N':
-        #     bottom_stroke_color = random_color4book()
+        if upper_stroke_color == '#000000':
+            upper_stroke_color = random_color4book()
+        if bottom_stroke_color == '#000000':
+            bottom_stroke_color = random_color4book()
 
         logo_backing_color = choice([
             '#fdd260', '#eb8924', '#79a4aa',

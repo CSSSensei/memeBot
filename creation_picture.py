@@ -94,7 +94,7 @@ def create_demotiv(path: str,
                    size: int,
                    distance: int) -> str:
     save_path = f'{path[:-4]}-mem-demotiv.png'
-    text_size = size // 10
+    text_size = size // 5
     times_new_roman = f'{os.path.dirname(__file__)}/assets/Times New Roman.ttf'
     arial = f'{os.path.dirname(__file__)}/assets/Arial.ttf'
 
@@ -123,7 +123,7 @@ def create_demotiv(path: str,
     if bottom_text == '':
         img = img.resize((img.width, int(3 * distance + img_past.height + 0.68 * text_size)))
     else:
-        img = img.resize((img.width, int(3.25 * distance + img_past.height + 1.05 * text_size)))
+        img = img.resize((img.width, int(3.5 * distance + img_past.height + 1.05 * text_size)))
 
     img_cnv = ImageDraw.Draw(img)
 
@@ -167,7 +167,7 @@ def create_demotiv(path: str,
                  anchor="mt"
                  )
     img_cnv.text((img.width // 2,
-                  int(img_past.height + 2.25 * distance + 0.68 * text_size)),
+                  int(img_past.height + 2.5 * distance + 0.68 * text_size)),
                  bottom_text,
                  font=font_bottom,
                  fill=bottom_color,
