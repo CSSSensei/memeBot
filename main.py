@@ -117,7 +117,7 @@ async def example_command(message: Message):
 
 @dp.message(Command(commands='about'))  # /about
 async def about_command(message: Message):
-    await message.answer('<i>Команда Phasalopedia. 12+\n2024</i>\n\nПоддержка:\n<b>@nklnkk</b>', reply_markup=basic_keyboard)
+    await message.answer('<i>Команда Phasalopedia. 16+\n2024</i>\n\nПоддержка:\n<b>@nklnkk</b>', reply_markup=basic_keyboard)
 
 
 @dp.message(Command(commands='deme'))
@@ -132,8 +132,8 @@ async def query_command(message: Message):
     if not amount:
         amount = 5
     for user in await UserQueryDB.get_last_queries(amount):
-        username = (await UserDB.get_user(user.user_id)).username
-        line = (f'<i>{username if username else user.user_id}</i> — '
+        username = await UserDB.get_username(user.user_id)
+        line = (f'<i>@{username if username else user.user_id}</i> — '
                 f'{", ".join(f"[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>{format_string(query)}</blockquote>" for unix_time, query in user.queries.items())}\n\n')
         if len(line) + len(txt) < 4096:
             txt += line
@@ -181,7 +181,8 @@ async def user_query_command(message: Message):
     if not user_id or not query:
         await message.answer('Неправильный <i>user_id</i> или этот пользователь не отправлял запросы')
         return
-    txt = ''
+    username = await UserDB.get_username(user_id)
+    txt = f'История запросов <b>{"@" + username if username else user_id}</b>\n\n'
     for unix_time, text in query.items():
         line = f'[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>{format_string(text)}</blockquote>\n\n'
         if len(line) + len(txt) < 4096:
@@ -211,7 +212,7 @@ async def create_demo_command(message: Message):
 
 @dp.message(F.text == 'Настройки')
 async def settings_handler(message: Message, edit=False, user_id=None):
-    user = await UserDB.get_user(user_id if user_id else message.from_user.id, message.from_user.username)
+    user = await UserDB.get_user(user_id if user_id else message.from_user.id)
     #                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     #                                          <--         phasalo          -->
 
@@ -223,9 +224,9 @@ async def settings_handler(message: Message, edit=False, user_id=None):
            f'Контур нижнего текста: <i><u>{get_colorname_by_hashcode(user.bottom_stroke_color)}</u></i>\n'
            f'Регистр текста: <i>{"<b>БАЛЬШИЕ БУКАВЫ</b>" if user.giant_text else "маленькие буковки"}</i>\n')
     if edit:
-        await message.edit_text(txt, reply_markup=get_keyboard(user))
+        await message.edit_text(txt, reply_markup=get_keyboard())
     else:
-        await message.answer(txt, reply_markup=get_keyboard(user))
+        await message.answer(txt, reply_markup=get_keyboard())
 
 
 @dp.message(F.text == 'Демотиватор')
@@ -247,40 +248,41 @@ async def set_book(message: Message, ):
 
 
 async def send_meme(message: Message, user: UserDB, mode=None, city_meme=False):
-    try:
-        if message.text is None and message.caption is None:
-            await message.answer('Ты забыл про надпись')
-            return
-        meme_txt = message.text if message.text else message.caption
-        photo_id = await UserQueryDB.add_new_query(user.user_id, int(time.time()), meme_txt)
-        meme_txt = meme_txt.strip().split('\n')
-        meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
-        photo_path = None
-        if city_meme:
-            meme_txt = [None, None, None]
-        if message.photo:
-            photo_path = f'{os.path.dirname(__file__)}/pictures/photo{random.randint(1, 10 ** 8)}.jpg'
-            await bot.download_file((await bot.get_file(message.photo[-1].file_id)).file_path, photo_path)
-
+    async with ChatActionSender(bot=bot, chat_id=message.from_user.id, action='upload_photo'):
         try:
-            meme_path = await create_meme(photo_path, *meme_txt,
-                                          mode=mode if mode else user.mode,
-                                          upper_color=user.upper_color,
-                                          bottom_color=user.bottom_color,
-                                          upper_stroke_color=user.upper_stroke_color,
-                                          bottom_stroke_color=user.bottom_stroke_color,
-                                          stroke_width=user.stroke_width,
-                                          giant_text=user.giant_text)
+            if message.text is None and message.caption is None:
+                await message.answer('Ты забыл про надпись')
+                return
+            meme_txt = message.text if message.text else message.caption
+            photo_id = await UserQueryDB.add_new_query(user.user_id, int(time.time()), meme_txt)
+            meme_txt = meme_txt.strip().split('\n')
+            meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
+            photo_path = None
+            if city_meme:
+                meme_txt = [None, None, None]
+            if message.photo:
+                photo_path = f'{os.path.dirname(__file__)}/pictures/photo{random.randint(1, 10 ** 8)}.jpg'
+                await bot.download_file((await bot.get_file(message.photo[-1].file_id)).file_path, photo_path)
 
-            keyboard = basic_keyboard if (city_meme or message.photo) else get_photo_inline_keyboard(photo_id)
-            await message.answer_photo(photo=FSInputFile(meme_path), reply_markup=keyboard)
-            os.remove(meme_path)
+            try:
+                meme_path = await create_meme(photo_path, *meme_txt,
+                                              mode=mode if mode else user.mode,
+                                              upper_color=user.upper_color,
+                                              bottom_color=user.bottom_color,
+                                              upper_stroke_color=user.upper_stroke_color,
+                                              bottom_stroke_color=user.bottom_stroke_color,
+                                              stroke_width=user.stroke_width,
+                                              giant_text=user.giant_text)
+
+                keyboard = basic_keyboard if (city_meme or message.photo) else get_photo_inline_keyboard(photo_id)
+                await message.answer_photo(photo=FSInputFile(meme_path), reply_markup=keyboard)
+                os.remove(meme_path)
+            except Exception as e:
+                await message.answer('Что-то пошло не так', reply_markup=basic_keyboard)
+                await bot.send_message(chat_id=972753303, text=f'Произошла ошибка!\n{e}')
         except Exception as e:
             await message.answer('Что-то пошло не так', reply_markup=basic_keyboard)
-            await bot.send_message(chat_id=972753303, text=f'Произошла ошибка!\n{e}')
-    except Exception as e:
-        await message.answer('Что-то пошло не так', reply_markup=basic_keyboard)
-        await bot.send_message(chat_id=972753303, text=f'Произошла ошибка! Код 234\n{e}')
+            await bot.send_message(chat_id=972753303, text=f'Произошла ошибка! Код 234\n{e}')
 
 
 @dp.callback_query(SetsCallBack.filter())
@@ -363,21 +365,22 @@ async def settings_button_distributor(callback: CallbackQuery, callback_data: Se
 
 @dp.callback_query(GenerateCallBack.filter())
 async def regenerate_button_distributor(callback: CallbackQuery, callback_data: GenerateCallBack):
-    photo_id = callback_data.photo_id
-    query = await UserQueryDB.get_query_by_id(photo_id)
-    meme_txt = query.strip().split('\n')
-    meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
-    user = await UserDB.get_user(user_id=callback.from_user.id)
-    meme_path = await create_meme(None, *meme_txt,
-                                  mode=user.mode,
-                                  upper_color=user.upper_color,
-                                  bottom_color=user.bottom_color,
-                                  upper_stroke_color=user.upper_stroke_color,
-                                  bottom_stroke_color=user.bottom_stroke_color,
-                                  stroke_width=user.stroke_width,
-                                  giant_text=user.giant_text)
-    await callback.message.edit_media(media=InputMediaPhoto(media=FSInputFile(meme_path)), reply_markup=get_photo_inline_keyboard(photo_id))
-    os.remove(meme_path)
+    async with ChatActionSender(bot=bot, chat_id=callback.from_user.id, action='upload_photo'):
+        photo_id = callback_data.photo_id
+        query = await UserQueryDB.get_query_by_id(photo_id)
+        meme_txt = query.strip().split('\n')
+        meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
+        user = await UserDB.get_user(user_id=callback.from_user.id, username=callback.from_user.username)
+        meme_path = await create_meme(None, *meme_txt,
+                                      mode=user.mode,
+                                      upper_color=user.upper_color,
+                                      bottom_color=user.bottom_color,
+                                      upper_stroke_color=user.upper_stroke_color,
+                                      bottom_stroke_color=user.bottom_stroke_color,
+                                      stroke_width=user.stroke_width,
+                                      giant_text=user.giant_text)
+        await callback.message.edit_media(media=InputMediaPhoto(media=FSInputFile(meme_path)), reply_markup=get_photo_inline_keyboard(photo_id))
+        os.remove(meme_path)
 
 
 @dp.message(F.content_type.in_({'text', 'photo'}))

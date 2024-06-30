@@ -327,8 +327,8 @@ def create_book(path: str,
                      )
 
     if len(author.split()) <= 1:
-        bottom_author = author if author != '' else "ПИСЯ"
-        upper_author = "ХУЙ СЕРГЕЕВИЧ"
+        bottom_author = author if author != '' else "Иванов"
+        upper_author = "Иван Иванович"
     else:
         bottom_author = author.split()[-1]
         upper_author = " ".join(author.split()[:-1])

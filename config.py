@@ -134,7 +134,7 @@ class GenerateCallBack(CallbackData, prefix="gen"):
     photo_id: int
 
 
-def get_keyboard(sets: UserDB):
+def get_keyboard():
     array_buttons: list[list[InlineKeyboardButton]] = [[], [], [], []]
     array_buttons[0].append(InlineKeyboardButton(text='Режим', callback_data=SetsCallBack(action=USERMODE_ACTION).pack()))
     array_buttons[1].append(InlineKeyboardButton(text='Цвет верхнего текста', callback_data=SetsCallBack(action=UPPERTEXT_ACTION).pack()))
@@ -203,11 +203,6 @@ def get_colorname_by_hashcode(hash):
             return color_name
     return hash
 
-    # Пример использования
-    input_color_code = '#800080'
-    color_name = get_color_name(input_color_code, COLORS)
-    print(color_name)  # Выведет 'Баклажанный'
-
 
 def get_case_keyboard(giant: bool):
     array_buttons: list[list[InlineKeyboardButton]] = []
@@ -238,7 +233,10 @@ def find_first_number(input_string):
     else:
         return None
 
+
 def format_string(text: str):
+    if not text:
+        return '⬛️'
     return text.replace('<', '«').replace('>', '»')
 
 

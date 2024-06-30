@@ -36,19 +36,21 @@ conn_loc.close()
 
 
 class UserDB:
-    def __init__(self, user_id, username=None, mode='in', banned=False, premium=False, upper_color='#FFFFFF', bottom_color='#FFFFFF',
-                 upper_stroke_color='#000000', bottom_stroke_color='#000000', stroke_width=3, giant_text=False):
-        self.user_id = user_id
-        self.username = username
-        self.mode = mode
-        self.banned = banned
-        self.premium = premium
-        self.upper_color = upper_color
-        self.bottom_color = bottom_color
-        self.upper_stroke_color = upper_stroke_color
-        self.bottom_stroke_color = bottom_stroke_color
-        self.stroke_width = stroke_width
-        self.giant_text = giant_text
+    def __init__(self, user_id: int, username: Optional[str] = None, mode: str = 'in',
+                 banned: bool = False, premium: bool = False, upper_color: str = '#FFFFFF',
+                 bottom_color: str = '#FFFFFF', upper_stroke_color: str = '#000000',
+                 bottom_stroke_color: str = '#000000', stroke_width: int = 3, giant_text: bool = False) -> None:
+        self.user_id: int = user_id
+        self.username: Optional[str] = username
+        self.mode: str = mode
+        self.banned: bool = banned
+        self.premium: bool = premium
+        self.upper_color: str = upper_color
+        self.bottom_color: str = bottom_color
+        self.upper_stroke_color: str = upper_stroke_color
+        self.bottom_stroke_color: str = bottom_stroke_color
+        self.stroke_width: int = stroke_width
+        self.giant_text: bool = giant_text
 
     @classmethod
     async def get_users_from_db(cls, db_name: str = users_db) -> List['UserDB']:
@@ -82,10 +84,11 @@ class UserDB:
             return cls(*row)
 
     @classmethod
-    async def add_new_user(cls, user_id: int, username: Optional[str] = None,
-                           db_name: str = users_db) -> 'UserDB':
+    async def add_new_user(cls, user_id: int, username: Optional[str] = None, db_name: str = users_db) -> 'UserDB':
         async with aiosqlite.connect(db_name) as db:
-            cursor = await db.execute("SELECT * FROM users_info WHERE id=?", (user_id,))
+            cursor = await db.execute(
+                "SELECT * FROM users_info WHERE id=?", (user_id,)
+            )
             user_local = await cursor.fetchone()
 
             if user_local is None:
@@ -105,7 +108,7 @@ class UserDB:
                 print(str(e))
 
     @classmethod
-    async def change_mode(cls, user_id: int, mode, db_name: str = users_db) -> None:
+    async def change_mode(cls, user_id: int, mode: str, db_name: str = users_db) -> None:
         async with aiosqlite.connect(db_name) as db:
             try:
                 await db.execute("UPDATE users_info SET mode=? WHERE id=?", (mode, user_id))
@@ -134,6 +137,15 @@ class UserDB:
             except Exception as e:
                 print(str(e))
 
+    @classmethod
+    async def get_username(cls, user_id: int, db_name: str = users_db) -> Union[str, None]:
+        async with aiosqlite.connect(db_name) as db:
+            cursor = await db.execute("SELECT username FROM users_info WHERE id=?", (user_id,))
+            row = await cursor.fetchone()
+            if row:
+                return row[0]
+            return None
+
 
 class UserQueryDB:
     def __init__(self, user_id: int, queries: Union[Dict[int, str], None] = None):
@@ -141,16 +153,18 @@ class UserQueryDB:
         self.queries: Union[Dict[int, str], None] = queries
 
     @classmethod
-    async def add_new_query(cls, user_id: int, time: int, query: str, db_name: str = users_db):
+    async def add_new_query(cls, user_id: int, time: int, query: str, db_name: str = users_db) -> int:
         async with aiosqlite.connect(db_name) as db:
-            await db.execute("INSERT INTO UserQueries (user_id, timestamp, query) VALUES (?, ?, ?)", (user_id, time, query))
+            await db.execute(
+                "INSERT INTO UserQueries (user_id, timestamp, query) VALUES (?, ?, ?)", (user_id, time, query)
+            )
             await db.commit()
             cursor = await db.execute("SELECT last_insert_rowid()")
             row_id = await cursor.fetchone()
             return row_id[0]
 
     @classmethod
-    async def get_query_by_id(cls, query_id: int, db_name: str = users_db):
+    async def get_query_by_id(cls, query_id: int, db_name: str = users_db) -> str:
         async with aiosqlite.connect(db_name) as db:
             cursor: aiosqlite.Cursor = await db.execute(
                 "SELECT query FROM UserQueries WHERE id = ?", (query_id,)
@@ -164,7 +178,7 @@ class UserQueryDB:
             cursor: aiosqlite.Cursor = await db.execute(
                 "SELECT timestamp, query FROM UserQueries WHERE user_id = ?", (user_id,)
             )
-            rows: Union[list[tuple[int, str]], None] = await cursor.fetchall()
+            rows: Union[List[tuple[int, str]], None] = await cursor.fetchall()
             queries: Dict[int, str] = {row[0]: row[1] for row in rows}
             return cls(user_id, queries)
 
@@ -172,8 +186,7 @@ class UserQueryDB:
     async def get_last_queries(cls, amount: int, db_name: str = users_db) -> List['UserQueryDB']:
         async with aiosqlite.connect(db_name) as db:
             cursor = await db.execute(
-                "SELECT user_id, timestamp, query FROM UserQueries ORDER BY timestamp DESC LIMIT ?",
-                (amount,)
+                "SELECT user_id, timestamp, query FROM UserQueries ORDER BY timestamp DESC LIMIT ?", (amount,)
             )
             rows = await cursor.fetchall()
             query_objects = []
@@ -194,9 +207,13 @@ if __name__ == "__main__":
             print(user.__dict__)
         print((await UserQueryDB.get_user_queries(6149109321)).__dict__)
 
+    async def test3():
+        print(await UserDB.get_username(0))
+
 
     # asyncio.run(test())
-    asyncio.run(test2())
+    asyncio.run(test())
+    asyncio.run(test3())
 
     # conn_loc = sqlite3.connect(users_db)
     # cursor_loc = conn_loc.cursor()
