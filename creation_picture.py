@@ -94,7 +94,7 @@ def create_demotiv(path: str,
                    size: int,
                    distance: int) -> str:
     save_path = f'{path[:-4]}-mem-demotiv.png'
-    text_size = size // 5
+    text_size = size // 10
     times_new_roman = f'{os.path.dirname(__file__)}/assets/Times New Roman.ttf'
     arial = f'{os.path.dirname(__file__)}/assets/Arial.ttf'
 

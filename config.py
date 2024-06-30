@@ -130,6 +130,10 @@ class SetsCallBack(CallbackData, prefix="sets"):
     action: int
 
 
+class GenerateCallBack(CallbackData, prefix="gen"):
+    photo_id: int
+
+
 def get_keyboard(sets: UserDB):
     array_buttons: list[list[InlineKeyboardButton]] = [[], [], [], []]
     array_buttons[0].append(InlineKeyboardButton(text='Режим', callback_data=SetsCallBack(action=USERMODE_ACTION).pack()))
@@ -219,6 +223,13 @@ def get_case_keyboard(giant: bool):
     return markup
 
 
+def get_photo_inline_keyboard(photo_id):
+    array_buttons: list[list[InlineKeyboardButton]] = [
+        [InlineKeyboardButton(text='Перегенерировать', callback_data=GenerateCallBack(photo_id=photo_id).pack())]]
+    markup = InlineKeyboardMarkup(inline_keyboard=array_buttons)
+    return markup
+
+
 def find_first_number(input_string):
     match = re.search(r'\d+', input_string)
 
@@ -226,6 +237,9 @@ def find_first_number(input_string):
         return match.group()
     else:
         return None
+
+def format_string(text: str):
+    return text.replace('<', '«').replace('>', '»')
 
 
 if __name__ == '__main__':

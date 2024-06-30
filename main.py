@@ -84,24 +84,40 @@ async def send_meme_lmao(message: Message):
 @dp.message(Command(commands='help'))
 async def help_command(message: Message):
     await message.answer('<b>Помощь калекам</b>\n'
-                         'Для создания реальной ржаки, тебе нужно нажать на кнопочки снизу (Выбрать шаблон)\n\n'
+                         'Для создания реальной ржаки тебе нужно нажать на кнопочки снизу (Выбрать шаблон <i>/example</i>)\n\n'
                          '<i><b>«Мемас» и «демотиватор»</b></i>\n'
-                         'Пишешь текст сверху, текст снизу и запрос на картинку. Всё с новой строчки! Запрос на картинку пиши, как будто в гугле картинку ищешь\n'
-                         '<blockquote>{Надпись сверху}\n'
-                         '{Надпись снизу}\n'
-                         '{Запрос на картинку}</blockquote>\n\n'
+                         'Пишешь текст сверху, текст снизу и запрос на картинку.\n'
+                         '<b>Всё с новой строчки!</b> (Shift + Enter)\n'
+                         'Запрос на картинку пиши, как будто в гугле картинку ищешь\n'
+                         '<blockquote>Надпись сверху\n'
+                         'Надпись снизу\n'
+                         'Запрос на картинку</blockquote>\n\n'
                          'Так же ты можешь прислать фотку вместо запроса и подписать её: текст сверху и текст снизу'
-                         '<blockquote>{Надпись сверху}\n'
-                         '{Надпись снизу}</blockquote>\n\n'
+                         '<blockquote>Надпись сверху\n'
+                         'Надпись снизу</blockquote>\n\n'
                          'Можно не присылать два текста'
-                         '<blockquote>{Надпись}\n'
-                         '{Запрос на картинку}</blockquote>\n\n'
+                         '<blockquote>Надпись\n'
+                         'Запрос на картинку</blockquote>\n\n'
                          'Или вообще одну надпись'
-                         '<blockquote>{Надпись}</blockquote>\n\n'
-                         '<i><b>«Чтиво»</b></i>'
-                         '<blockquote>{Автор}\n'
-                         '{Название}\n'
-                         '{Запрос на картинку}</blockquote>', reply_markup=basic_keyboard)
+                         '<blockquote>Надпись</blockquote>\n\n'
+                         '<i><b>«Чтиво»</b></i>\n'
+                         '<blockquote>Автор (ФИО)\n'
+                         'Название\n'
+                         'Запрос на картинку</blockquote>\n', reply_markup=basic_keyboard)
+
+
+@dp.message(Command(commands='example'))  # /example
+async def example_command(message: Message):
+    async with ChatActionSender(bot=bot, chat_id=message.from_user.id, action='upload_photo'):
+        photo1 = InputMediaPhoto(media=FSInputFile(f"{os.path.dirname(__file__)}/assets/example1.jpg"))
+        photo2 = InputMediaPhoto(media=FSInputFile(f"{os.path.dirname(__file__)}/assets/example2.jpg"))
+        photo3 = InputMediaPhoto(media=FSInputFile(f"{os.path.dirname(__file__)}/assets/example3.jpg"))
+        await bot.send_media_group(media=[photo1, photo2, photo3], chat_id=message.chat.id)
+
+
+@dp.message(Command(commands='about'))  # /about
+async def about_command(message: Message):
+    await message.answer('<i>Команда Phasalopedia. 12+\n2024</i>\n\nПоддержка:\n<b>@nklnkk</b>', reply_markup=basic_keyboard)
 
 
 @dp.message(Command(commands='deme'))
@@ -118,7 +134,7 @@ async def query_command(message: Message):
     for user in await UserQueryDB.get_last_queries(amount):
         username = (await UserDB.get_user(user.user_id)).username
         line = (f'<i>{username if username else user.user_id}</i> — '
-                f'{", ".join(f"[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>«{query}»</blockquote>" for unix_time, query in user.queries.items())}\n\n')
+                f'{", ".join(f"[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>{format_string(query)}</blockquote>" for unix_time, query in user.queries.items())}\n\n')
         if len(line) + len(txt) < 4096:
             txt += line
         else:
@@ -167,7 +183,7 @@ async def user_query_command(message: Message):
         return
     txt = ''
     for unix_time, text in query.items():
-        line = f'[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>{text}</blockquote>\n\n'
+        line = f'[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>{format_string(text)}</blockquote>\n\n'
         if len(line) + len(txt) < 4096:
             txt += line
         else:
@@ -235,8 +251,9 @@ async def send_meme(message: Message, user: UserDB, mode=None, city_meme=False):
         if message.text is None and message.caption is None:
             await message.answer('Ты забыл про надпись')
             return
-        await UserQueryDB.add_new_query(user.user_id, int(time.time()), message.text)
-        meme_txt = (message.text if message.text else message.caption).strip().split('\n')
+        meme_txt = message.text if message.text else message.caption
+        photo_id = await UserQueryDB.add_new_query(user.user_id, int(time.time()), meme_txt)
+        meme_txt = meme_txt.strip().split('\n')
         meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
         photo_path = None
         if city_meme:
@@ -254,7 +271,9 @@ async def send_meme(message: Message, user: UserDB, mode=None, city_meme=False):
                                           bottom_stroke_color=user.bottom_stroke_color,
                                           stroke_width=user.stroke_width,
                                           giant_text=user.giant_text)
-            await message.answer_photo(photo=FSInputFile(meme_path), reply_markup=basic_keyboard)
+
+            keyboard = basic_keyboard if (city_meme or message.photo) else get_photo_inline_keyboard(photo_id)
+            await message.answer_photo(photo=FSInputFile(meme_path), reply_markup=keyboard)
             os.remove(meme_path)
         except Exception as e:
             await message.answer('Что-то пошло не так', reply_markup=basic_keyboard)
@@ -340,6 +359,25 @@ async def settings_button_distributor(callback: CallbackQuery, callback_data: Se
         await UserDB.change_text_case(callback.from_user.id, True if action == SETgiantcase else False)
         user = await UserDB.get_user(callback.from_user.id, callback.from_user.username)
         await text_case_mode(user)
+
+
+@dp.callback_query(GenerateCallBack.filter())
+async def regenerate_button_distributor(callback: CallbackQuery, callback_data: GenerateCallBack):
+    photo_id = callback_data.photo_id
+    query = await UserQueryDB.get_query_by_id(photo_id)
+    meme_txt = query.strip().split('\n')
+    meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
+    user = await UserDB.get_user(user_id=callback.from_user.id)
+    meme_path = await create_meme(None, *meme_txt,
+                                  mode=user.mode,
+                                  upper_color=user.upper_color,
+                                  bottom_color=user.bottom_color,
+                                  upper_stroke_color=user.upper_stroke_color,
+                                  bottom_stroke_color=user.bottom_stroke_color,
+                                  stroke_width=user.stroke_width,
+                                  giant_text=user.giant_text)
+    await callback.message.edit_media(media=InputMediaPhoto(media=FSInputFile(meme_path)), reply_markup=get_photo_inline_keyboard(photo_id))
+    os.remove(meme_path)
 
 
 @dp.message(F.content_type.in_({'text', 'photo'}))

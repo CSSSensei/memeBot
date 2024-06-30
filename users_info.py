@@ -145,6 +145,18 @@ class UserQueryDB:
         async with aiosqlite.connect(db_name) as db:
             await db.execute("INSERT INTO UserQueries (user_id, timestamp, query) VALUES (?, ?, ?)", (user_id, time, query))
             await db.commit()
+            cursor = await db.execute("SELECT last_insert_rowid()")
+            row_id = await cursor.fetchone()
+            return row_id[0]
+
+    @classmethod
+    async def get_query_by_id(cls, query_id: int, db_name: str = users_db):
+        async with aiosqlite.connect(db_name) as db:
+            cursor: aiosqlite.Cursor = await db.execute(
+                "SELECT query FROM UserQueries WHERE id = ?", (query_id,)
+            )
+            query = (await cursor.fetchone())[0]
+            return query
 
     @classmethod
     async def get_user_queries(cls, user_id: int, db_name: str = users_db) -> 'UserQueryDB':

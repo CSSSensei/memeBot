@@ -215,9 +215,6 @@ async def create_meme(path_img: str = None,
                                   distance=distance)
 
     elif mode == 'bo':
-        upper_stroke_color = random_color4book()
-        bottom_stroke_color = random_color4book()
-
         if upper_stroke_color == '#000000':
             upper_stroke_color = random_color4book()
         if bottom_stroke_color == '#000000':
