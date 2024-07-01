@@ -55,12 +55,11 @@ class UserDB:
     @classmethod
     async def get_users_from_db(cls, db_name: str = users_db) -> List['UserDB']:
         async with aiosqlite.connect(db_name) as db:
-            cursor = await db.execute("SELECT * FROM users_info")
+            cursor = await db.execute(
+                "SELECT * FROM users_info ORDER BY CASE WHEN username IS NULL THEN 1 ELSE 0 END, username ASC"
+            )
             rows = await cursor.fetchall()
-            users = []
-            for row in rows:
-                user = cls(*row)
-                users.append(user)
+            users = [cls(*row) for row in rows]
             return users
 
     @classmethod
@@ -176,7 +175,7 @@ class UserQueryDB:
     async def get_user_queries(cls, user_id: int, db_name: str = users_db) -> 'UserQueryDB':
         async with aiosqlite.connect(db_name) as db:
             cursor: aiosqlite.Cursor = await db.execute(
-                "SELECT timestamp, query FROM UserQueries WHERE user_id = ?", (user_id,)
+                "SELECT timestamp, query FROM UserQueries WHERE user_id = ? ORDER BY timestamp DESC", (user_id,)
             )
             rows: Union[List[tuple[int, str]], None] = await cursor.fetchall()
             queries: Dict[int, str] = {row[0]: row[1] for row in rows}

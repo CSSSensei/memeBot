@@ -151,50 +151,13 @@ async def query_command(message: Message):
 
 @dp.message(Command(commands='get_users'), F.from_user.id.in_(ADMINS))  # /get_users
 async def users_command(message: Message):
-    users = await UserDB.get_users_from_db()
-    txt = f'Всего пользователей: <b>{len(users)}</b>\n\n'
-    for user in users:
-        memes_amount = len((await UserQueryDB.get_user_queries(user.user_id)).queries)
-        emoji = '😐'
-        if memes_amount > 10:
-            emoji = '🤣'
-        elif memes_amount > 0:
-            emoji = '😂'
-        line = (f'<b>{"@" + user.username if user.username else "🐸"}</b> | <i>{user.user_id}</i> |' + (' 💀 |' if user.banned else '') +
-                (' 👑 |' if user.premium else '') + f' {emoji} {memes_amount}\n')
-        if len(line) + len(txt) < 4096:
-            txt += line
-        else:
-            try:
-                await message.answer(text=txt)
-            except Exception as e:
-                await message.answer(text=f'Произошла ошибка!\n{e}')
-            txt = line
-    if len(txt) != 0:
-        await message.answer(txt)
+    await get_users_by_page(message.from_user.id)
 
 
 @dp.message(Command(commands='user_query'), F.from_user.id.in_(ADMINS))  # /user_query
 async def user_query_command(message: Message):
-    user_id = find_first_number(message.text)
-    query = (await UserQueryDB.get_user_queries(user_id)).queries
-    if not user_id or not query:
-        await message.answer('Неправильный <i>user_id</i> или этот пользователь не отправлял запросы')
-        return
-    username = await UserDB.get_username(user_id)
-    txt = f'История запросов <b>{"@" + username if username else user_id}</b>\n\n'
-    for unix_time, text in query.items():
-        line = f'[{datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)}]: <blockquote>{format_string(text)}</blockquote>\n\n'
-        if len(line) + len(txt) < 4096:
-            txt += line
-        else:
-            try:
-                await message.answer(text=txt)
-            except Exception as e:
-                await message.answer(text=f'Произошла ошибка!\n{e}')
-            txt = line
-    if len(txt) != 0:
-        await message.answer(txt)
+    user_id_to_find = find_first_number(message.text)
+    await user_query_by_page(message.from_user.id, user_id_to_find)
 
 
 @dp.message(Command(commands='getcoms'), F.from_user.id.in_(ADMINS))  # /getcoms
@@ -381,6 +344,19 @@ async def regenerate_button_distributor(callback: CallbackQuery, callback_data: 
                                       giant_text=user.giant_text)
         await callback.message.edit_media(media=InputMediaPhoto(media=FSInputFile(meme_path)), reply_markup=get_photo_inline_keyboard(photo_id))
         os.remove(meme_path)
+
+
+@dp.callback_query(CutMessageCallBack.filter())
+async def cut_message_distributor(callback: CallbackQuery, callback_data: CutMessageCallBack):
+    action = callback_data.action
+    page = callback_data.page
+    user_id = callback_data.user_id
+    if action == 1:
+        await get_users_by_page(callback.from_user.id, page, callback.message.message_id)
+    elif action == 2:
+        await user_query_by_page(callback.from_user.id, user_id, page, callback.message.message_id)
+    elif action == -1:
+        await callback.answer()
 
 
 @dp.message(F.content_type.in_({'text', 'photo'}))
