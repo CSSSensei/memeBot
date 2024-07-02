@@ -138,7 +138,7 @@ async def create_meme(path_img: str = None,
                       bottom_text: str = None,
                       upper_text: str = None,
                       search_text: str = None,
-                      mode='in',  # in, de, bo
+                      mode='in',  # in, de, bo, fc
                       upper_color='#FFFFFF',
                       bottom_color='#FFFFFF',
                       upper_stroke_color='#000000',
@@ -147,6 +147,7 @@ async def create_meme(path_img: str = None,
                       giant_text=False):
     size = 1000
     distance = 50
+    opacity = '88'
 
     path_img = None if path_img == '' else path_img
     bottom_text = None if bottom_text == '' else bottom_text
@@ -174,6 +175,8 @@ async def create_meme(path_img: str = None,
 
     if path_img:
         mem_path_img = path_img
+    elif mode == 'fc':
+        mem_path_img = await search_picture(mem_search_text, True)
     else:
         mem_path_img = await search_picture(mem_search_text)
 
@@ -246,6 +249,30 @@ async def create_meme(path_img: str = None,
                                logo_backing_color=decoding_color(logo_backing_color),
                                size=size,
                                distance=distance)
+
+    elif mode == 'fc':
+
+        if bottom_text and not upper_text:
+            mem_upper_text = bottom_text
+            mem_bottom_text = ''
+
+        if upper_stroke_color != '#000000':
+            stroke_color = upper_stroke_color
+        elif bottom_stroke_color != '#000000':
+            stroke_color = bottom_stroke_color
+        else:
+            stroke_color = '#FFFFFF'
+
+        path_mem = create_fact(path=mem_path_img,
+                               upper_text=mem_upper_text,
+                               bottom_text=mem_bottom_text,
+                               upper_color=decoding_color(upper_color),
+                               bottom_color=decoding_color(bottom_color),
+                               stroke_color=decoding_color(stroke_color),
+                               opacity=opacity,
+                               size=size,
+                               distance=distance)
+
     else:
         return mem_path_img
 
@@ -256,25 +283,27 @@ async def create_meme(path_img: str = None,
 if __name__ == '__main__':
     asyncio.run(
         create_meme(
-            # path_img="pictures/1.jpg",
             path_img=None,
-            bottom_text="я оказывается пассивный латентный гетеросексуал",
+            bottom_text="Гагарин",
+            upper_text="Не был первым человеком",
+            search_text=None,
+            mode='fc',
+            upper_color='#FFFFFF',
+            bottom_color='#FFFFFF',
+            # stroke_width=3,
+            giant_text=False
+
+            # path_img="pictures/1.jpg",
             # bottom_text="1985",
             # bottom_text="Горе от ума",
+            # search_text="Белый фон",
             # bottom_text="Вероника решает умереть",
             # upper_text="Пауло коэльо",
             # upper_text="Ирвин жопэ Шоу",
             # upper_text="Харпер ли",
-            upper_text="гей",
             # upper_text="Хуй сергеевич",
             # upper_text=None,
-            search_text=None,
-            mode='bo',
-            upper_color='#588157',
-            bottom_color='#588157',
             # upper_stroke_color="#c1121f",
             # bottom_stroke_color="#2d3a53",
-            stroke_width=4,
-            giant_text=False
         )
     )

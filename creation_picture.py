@@ -1,13 +1,76 @@
 import random
+from math import sqrt
+import re
 
 from PIL import Image, ImageDraw, ImageFont
 import os
 
 
+def draw_round_gradient(img: Image,
+                        xy: tuple[int, int, int, int],
+                        inner_color: str,
+                        outer_color: str,
+                        center: tuple[int, int] = None):
+
+    def decoding_color(color: str) -> tuple[int, int, int, int]:
+        default_color = (0, 0, 0, 255)
+        pattern = r'^#[0-9a-fA-F]{8}$'
+
+        if re.match(pattern, color) is not None:
+            rgba_color = re.findall(r"(..)", color[1:])
+            return tuple(int(i, 16) for i in rgba_color)
+        return default_color
+
+    def mix_colors(color_bg: tuple[int, int, int],
+                   color_pt: tuple[int, int, int],
+                   alpha: int) -> tuple[int, int, int]:
+
+        mix_color = [0, 0, 0]
+        mix_ratio = alpha / 255
+        mix_color_bg = [i * (1 - mix_ratio) for i in color_bg]
+        mix_color_pt = [i * mix_ratio for i in color_pt]
+
+        for i in range(len(mix_color)):
+            mix_color[i] = int(mix_color_bg[i] + mix_color_pt[i])
+        return tuple(mix_color)
+
+    width = xy[2] - xy[0]
+    height = xy[3] - xy[1]
+
+    start = (width // 2, height // 2) if not center else center
+
+    rgba_inner_color = decoding_color(inner_color)
+    rgba_outer_color = decoding_color(outer_color)
+
+    max_distance2start = max(
+        sqrt((0 - start[0]) ** 2 + (0 - start[1]) ** 2),
+        sqrt((width - start[0]) ** 2 + (0 - start[1]) ** 2),
+        sqrt((0 - start[0]) ** 2 + (height - start[1]) ** 2),
+        sqrt((width - start[0]) ** 2 + (height - start[1]) ** 2)
+    )
+
+    for y in range(height):
+        for x in range(width):
+            distance2start = sqrt((x - start[0]) ** 2 + (y - start[1]) ** 2)
+
+            distance2start = distance2start / max_distance2start
+
+            r = rgba_outer_color[0] * distance2start + rgba_inner_color[0] * (1 - distance2start)
+            g = rgba_outer_color[1] * distance2start + rgba_inner_color[1] * (1 - distance2start)
+            b = rgba_outer_color[2] * distance2start + rgba_inner_color[2] * (1 - distance2start)
+            a = rgba_outer_color[3] * distance2start + rgba_inner_color[3] * (1 - distance2start)
+
+            img.putpixel((x, y),
+                         mix_colors(img.getpixel((x, y)),
+                                    (int(r), int(g), int(b)),
+                                    int(a)
+                                    )
+                         )
+
+
 def calc_font_size(text: str,
                    width: int,
-                   font_path: str):
-                   # height=0):
+                   font_path: str):  # height=0):
 
     img = Image.new('RGB', (1, 1), color="#000000")
     img_cnv = ImageDraw.Draw(img)
@@ -418,6 +481,105 @@ def create_book(path: str,
                  fill=basic_color,
                  anchor="mm"
                  )
+
+    img.save(save_path)
+    return save_path
+
+
+def create_fact(path: str,
+                upper_text: str,
+                bottom_text: str,
+                upper_color: str,
+                bottom_color: str,
+                stroke_color: str,
+                opacity: str,
+                size: int,
+                distance: int) -> str:
+    save_path = f'{path[:-4]}-mem-fact.png'
+
+    arial = f'{os.path.dirname(__file__)}/assets/Arial.ttf'
+
+    img = Image.open(path).convert('RGB').resize((size, size))
+    img_cnv = ImageDraw.Draw(img, "RGBA")
+
+    # Затемнение картинки
+
+    # img_cnv.rectangle((0, 0, img.width, img.height),
+    #                   fill='#000000' + opacity)
+    draw_round_gradient(img,
+                        (0, 0, size, size),
+                        "#000000" + opacity,
+                        "#00000000",
+                        # (img.width // 2, 3 * img.height // 4)
+                        )
+
+    center_line_height = size // 100
+    center_line_width = size // 5
+
+    img_cnv.rectangle((img.width // 2 - center_line_width // 2,
+                       img.height // 2 - center_line_height // 2,
+                       img.width // 2 + center_line_width // 2,
+                       img.height // 2 + center_line_height // 2),
+                      fill=stroke_color + opacity,
+                      )
+
+    upper_text = upper_text[:51]
+
+    bottom_strings = []
+    if len(bottom_text.split()) > 1:
+        counter = 0
+        line = ""
+
+        for i in bottom_text.split():
+            counter += 1
+            line += i + " "
+            if len(line) >= 30:
+                line = line[:-1]
+                bottom_strings.append(line)
+                line = ""
+
+        if line != "":
+            bottom_strings.append(line)
+
+    else:
+        bottom_strings = [bottom_text[:31]]
+
+    upper_size = size // 10
+    new_upper_size = calc_font_size(upper_text, size - (2 * distance), arial)
+    if new_upper_size < upper_size:
+        upper_size = new_upper_size
+
+    bottom_size = size // 5
+    for bottom_string in bottom_strings:
+        new_bottom_size = calc_font_size(bottom_string, size - (2 * distance), arial) if bottom_text != '' else bottom_size
+        if new_bottom_size < bottom_size:
+            bottom_size = new_bottom_size
+
+    font_upper = ImageFont.truetype(arial, upper_size)
+    font_bottom = ImageFont.truetype(arial, bottom_size)
+
+    img_cnv.text((img.width // 2,
+                  img.height // 2 - distance),
+                 upper_text,
+                 font=font_upper,
+                 fill=upper_color,
+                 stroke_width=2,
+                 anchor="ms"
+                 )
+
+    for number_string in range(len(bottom_strings)):
+        x_past = img.height // 2 + (number_string * bottom_size) + 2 * distance
+
+        if x_past > img.height:
+            break
+
+        img_cnv.text((img.width // 2,
+                      x_past),
+                     bottom_strings[number_string],
+                     font=font_bottom,
+                     fill=bottom_color,
+                     anchor="ms"
+                     )
 
     img.save(save_path)
     return save_path
