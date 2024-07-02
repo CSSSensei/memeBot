@@ -176,7 +176,7 @@ async def create_meme(path_img: str = None,
     if path_img:
         mem_path_img = path_img
     elif mode == 'fc':
-        mem_path_img = await search_picture(mem_search_text, True)
+        mem_path_img = await search_picture(mem_search_text)
     else:
         mem_path_img = await search_picture(mem_search_text)
 
