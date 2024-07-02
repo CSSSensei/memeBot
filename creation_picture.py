@@ -1,18 +1,19 @@
 import random
 from math import sqrt
 import re
+from typing import Tuple
 
 from PIL import Image, ImageDraw, ImageFont
 import os
 
 
 def draw_round_gradient(img: Image,
-                        xy: tuple[int, int, int, int],
+                        xy: Tuple[int, int, int, int],
                         inner_color: str,
                         outer_color: str,
-                        center: tuple[int, int] = None):
+                        center: Tuple[int, int] = None):
 
-    def decoding_color(color: str) -> tuple[int, int, int, int]:
+    def decoding_color(color: str) -> Tuple[int, int, int, int]:
         default_color = (0, 0, 0, 255)
         pattern = r'^#[0-9a-fA-F]{8}$'
 
@@ -21,9 +22,9 @@ def draw_round_gradient(img: Image,
             return tuple(int(i, 16) for i in rgba_color)
         return default_color
 
-    def mix_colors(color_bg: tuple[int, int, int],
-                   color_pt: tuple[int, int, int],
-                   alpha: int) -> tuple[int, int, int]:
+    def mix_colors(color_bg: Tuple[int, int, int],
+                   color_pt: Tuple[int, int, int],
+                   alpha: int) -> Tuple[int, int, int]:
 
         mix_color = [0, 0, 0]
         mix_ratio = alpha / 255
