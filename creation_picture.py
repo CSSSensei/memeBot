@@ -205,7 +205,7 @@ def create_demotiv(path: str,
 
     img_cnv = ImageDraw.Draw(img)
     upper_bbox = list(img_cnv.textbbox((0, 0), upper_text, font_upper))
-    delta = 0  # высота между блоками кода upper и bottom
+    delta = 0  # высота между блоками текста upper и bottom
     if bottom_text != '':
         height_upper = upper_bbox[3] - upper_bbox[1]  # высота верхнего текста
         PHASALO_ratio = 1.05  # межстрочный интерва 5%
