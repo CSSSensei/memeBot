@@ -7,20 +7,32 @@ from PIL import Image, ImageDraw, ImageFont
 import os
 
 
+def decoding_color(color: str) -> Tuple[int, int, int, int]:
+    default_color = (0, 0, 0, 255)
+    pattern = r'^#[0-9a-fA-F]{8}$'
+
+    if re.match(pattern, color) is not None:
+        rgba_color = re.findall(r"(..)", color[1:])
+        return tuple(int(i, 16) for i in rgba_color)
+    return default_color
+
+
+def repaint_icon(img: Image,
+                 color: str,):
+
+    rgba_color = decoding_color(color)
+
+    for y in range(img.height):
+        for x in range(img.width):
+            if img.getpixel((x, y)) != (0, 0, 0, 0):
+                img.putpixel((x, y), rgba_color)
+
+
 def draw_round_gradient(img: Image,
                         xy: Tuple[int, int, int, int],
                         inner_color: str,
                         outer_color: str,
                         center: Tuple[int, int] = None):
-
-    def decoding_color(color: str) -> Tuple[int, int, int, int]:
-        default_color = (0, 0, 0, 255)
-        pattern = r'^#[0-9a-fA-F]{8}$'
-
-        if re.match(pattern, color) is not None:
-            rgba_color = re.findall(r"(..)", color[1:])
-            return tuple(int(i, 16) for i in rgba_color)
-        return default_color
 
     def mix_colors(color_bg: Tuple[int, int, int],
                    color_pt: Tuple[int, int, int],
@@ -89,7 +101,7 @@ def calc_font_size(text: str,
     # text_height1 = bbox1[3] - bbox1[1]
 
     relation_width = (size2 - size1) / (text_width2 - text_width1)
-    relation_width -= 0.01
+    # relation_width -= 0.01
     # relation_height = (size2 - size1) / (text_height2 - text_height1)
 
     return int(width * relation_width)
@@ -158,22 +170,24 @@ def create_demotiv(path: str,
                    size: int,
                    distance: int) -> str:
     save_path = f'{path[:-4]}-mem-demotiv.png'
-    text_size = size // 10
     times_new_roman = f'{os.path.dirname(__file__)}/assets/Times New Roman.ttf'
     arial = f'{os.path.dirname(__file__)}/assets/Arial.ttf'
 
-    img_past = Image.open(path).convert('RGB')
-    relation = img_past.height / img_past.width
+    img_paste = Image.open(path).convert('RGB')
+    relation = img_paste.height / img_paste.width
 
-    img_past = img_past.resize((size - (distance * 2), int((size - (distance * 2)) * relation)))
+    img_paste = img_paste.resize((size - (2 * distance), int((size - (2 * distance)) * relation)))
 
     img = Image.new('RGB', (size, size), color="#000000")
 
-    text_size1 = calc_font_size(upper_text, size - (2 * distance), times_new_roman)
-    text_size2 = calc_font_size(bottom_text, size - (2 * distance), arial) if bottom_text != '' else text_size
+    text_size1 = calc_font_size(upper_text, size - (6 * distance), times_new_roman)
+    text_size2 = calc_font_size(bottom_text, size - (6 * distance), arial) if bottom_text != '' else text_size1
 
-    if min(text_size1, text_size2) < text_size:
-        text_size = min(text_size1, text_size2)
+    if text_size1 > text_size2 * 2:
+        text_size = text_size2 * 2
+    else:
+        text_size = text_size1
+
 
     font_upper = ImageFont.truetype(times_new_roman, text_size)
     font_bottom = ImageFont.truetype(arial, text_size // 2)
@@ -185,25 +199,25 @@ def create_demotiv(path: str,
     #  Times New Roman: 0.68
 
     if bottom_text == '':
-        img = img.resize((img.width, int(3 * distance + img_past.height + 0.68 * text_size)))
+        img = img.resize((img.width, int(3 * distance + img_paste.height + 0.68 * text_size)))
     else:
-        img = img.resize((img.width, int(3.5 * distance + img_past.height + 1.05 * text_size)))
+        img = img.resize((img.width, int(3.5 * distance + img_paste.height + 1.05 * text_size)))
 
     img_cnv = ImageDraw.Draw(img)
 
     img_cnv.rectangle((distance - 8,
                        distance - 8,
-                       img_past.width + distance + 8,
-                       img_past.height + distance + 8),
+                       img_paste.width + distance + 8,
+                       img_paste.height + distance + 8),
                       fill='#000000',
                       outline=stroke_color,
                       width=stroke_width,
                       )
 
-    img.paste(img_past, (distance, distance))
+    img.paste(img_paste, (distance, distance))
 
-    bbox = img_cnv.textbbox((int(img_past.width + distance - 1),
-                             int(img_past.height + distance)),
+    bbox = img_cnv.textbbox((int(img_paste.width + distance - 1),
+                             int(img_paste.height + distance)),
                             footnote,
                             font=font_footnote,
                             anchor='rt')
@@ -215,8 +229,8 @@ def create_demotiv(path: str,
 
     img_cnv.rectangle(bbox, fill="#000000")
 
-    img_cnv.text((int(img_past.width + distance),
-                  int(img_past.height + distance)),
+    img_cnv.text((int(img_paste.width + distance),
+                  int(img_paste.height + distance)),
                  footnote,
                  font=font_footnote,
                  fill=stroke_color,
@@ -224,14 +238,14 @@ def create_demotiv(path: str,
                  anchor="rt"
                  )
     img_cnv.text((img.width // 2,
-                  img_past.height + 2 * distance),
+                  img_paste.height + 2 * distance),
                  upper_text,
                  font=font_upper,
                  fill=upper_color,
                  anchor="mt"
                  )
     img_cnv.text((img.width // 2,
-                  int(img_past.height + 2.5 * distance + 0.68 * text_size)),
+                  int(img_paste.height + 2.5 * distance + 0.68 * text_size)),
                  bottom_text,
                  font=font_bottom,
                  fill=bottom_color,
@@ -516,6 +530,124 @@ def create_fact(path: str,
 
     center_line_height = size // 100
     center_line_width = size // 5
+
+    img_cnv.rectangle((img.width // 2 - center_line_width // 2,
+                       img.height // 2 - center_line_height // 2,
+                       img.width // 2 + center_line_width // 2,
+                       img.height // 2 + center_line_height // 2),
+                      fill=stroke_color + opacity,
+                      )
+
+    upper_text = upper_text[:51]
+
+    bottom_strings = []
+    if len(bottom_text.split()) > 1:
+
+        line = ''
+        for i in bottom_text.split():
+            line += i + ' '
+            if len(line) >= 30:
+                line = line[:-1]
+                bottom_strings.append(line)
+                line = ''
+
+        if line != '':
+            bottom_strings.append(line)
+
+    else:
+        bottom_strings = [bottom_text[:31]]
+
+    upper_size = size // 10
+    new_upper_size = calc_font_size(upper_text, size - (2 * distance), arial)
+    if new_upper_size < upper_size:
+        upper_size = new_upper_size
+
+    bottom_size = size // 15
+    for bottom_string in bottom_strings:
+        new_bottom_size = calc_font_size(bottom_string, size - (2 * distance), arial) if bottom_text != '' else bottom_size
+        if new_bottom_size < bottom_size:
+            bottom_size = new_bottom_size
+
+    font_upper = ImageFont.truetype(arial, upper_size)
+    font_bottom = ImageFont.truetype(arial, bottom_size)
+
+    img_cnv.text((img.width // 2,
+                  img.height // 2 - distance),
+                 upper_text,
+                 font=font_upper,
+                 fill=upper_color,
+                 stroke_width=2,
+                 anchor="ms"
+                 )
+
+    for number_string in range(len(bottom_strings)):
+        x_past = img.height // 2 + (number_string * bottom_size) + 2 * distance
+
+        if x_past > img.height:
+            break
+
+        img_cnv.text((img.width // 2,
+                      x_past),
+                     bottom_strings[number_string],
+                     font=font_bottom,
+                     fill=bottom_color,
+                     anchor="ms"
+                     )
+
+    img.save(save_path)
+    return save_path
+
+
+def create_tele(path: str,
+                profile_name: str,
+                msg: str,
+                online_status: str,
+                ignore_status: bool,
+                time_inner: str,
+                profile_name_color: str,
+                msg_color: str,
+                bg_color: str,
+                msg_bg_color: str,
+                opacity: str) -> str:
+    save_path = f'{path[:-4]}-mem-tele.png'
+    width = 1080
+    height = 1920
+    name_case_height = height // 12
+    msg_case_height = height // 14
+    distance = width // 36
+    max_in_strings = 35
+
+    roboto = f'{os.path.dirname(__file__)}/assets/Roboto-Regular.ttf'
+
+    img = Image.new('RGB', (width, height), color="#395778")
+    img_cnv = ImageDraw.Draw(img, "RGBA")
+
+    img_past = Image.open(path).convert('RGB').resize((name_case_height - distance,
+                                                       name_case_height - distance))
+
+    msg_strings_temp = []
+    msg_strings = []
+
+    nct = 0
+    for nc in range(len(msg)):
+        if msg[nc] == '$':
+            msg_strings_temp.append(msg[nct:nc].replace('$', '').strip())
+            nct = nc
+    msg_strings_temp.append(msg[nct:(len(msg) - 1)].replace('$', '').strip())
+
+    line = ''
+    for string in msg_strings_temp:
+        for word in string:
+            line += word + ' '
+            if len(line) >= 30:
+                line = line[:-1]
+                bottom_strings.append(line)
+                line = ''
+
+        if line != '':
+            bottom_strings.append(line)
+
+
 
     img_cnv.rectangle((img.width // 2 - center_line_width // 2,
                        img.height // 2 - center_line_height // 2,

@@ -1,8 +1,8 @@
 import re
-from random import choice, shuffle
+from random import choice, shuffle, randint
 import asyncio
 
-from search_picture import search_picture
+from search_picture import search_picture  #, search_best_picture
 from required_case import word2case
 from taker_from_db import take_from_db
 from creation_picture import *
@@ -27,16 +27,18 @@ def random_insult() -> str:
              ]
     list4 = ['ёбнулись', 'ёбнутые',
              'охуели', 'охуевшие',
-             'охнели', 'охневшие',
+             'охренели', 'охреневшие',
              'ахуели', 'ахуевшие',
-             'ахнели', 'ахневшие',
+             'ахренели', 'ахреневшие',
              'офигели', 'офигевшие',
              'прихуели', 'прихуевшие',
-             'прихнели', 'прихневшие',
+             'прихренели', 'прихреневшие',
              'прифигели', 'прифигевшие',
              'очешуели', 'очешуевшие',
              'долбанулись', 'долбанутые',
              'конченые',
+             'долбоёбы',
+             'дауны',
              ]
 
     insult = [choice(list1), choice(list2), choice(list3), choice(list4)]
@@ -134,11 +136,64 @@ def random_color4book() -> str:
     return choice(color)
 
 
+def random_online_status() -> str:
+    way = randint(0, 2)
+
+    if way == 0:
+        return 'online'
+
+    elif way == 1:
+        return 'был(а) недавно'
+
+    else:
+        status = 'был(а) '
+        way2 = randint(0, 1)
+
+        if way2 == 0:
+            time_online = randint(1, 59)
+            status += str(time_online)
+            status += ' минут'
+
+            if (time_online - 10) // 10 == 0:
+                pass
+
+            elif time_online % 10 == 1:
+                status += 'у'
+
+            elif time_online % 10 in [2, 3, 4]:
+                status += 'ы'
+
+        elif way2 == 1:
+            time_online = randint(1, 23)
+            status += str(time_online)
+            status += ' часов'
+
+            if (time_online - 10) // 10 == 0:
+                pass
+
+            elif time_online % 10 == 1:
+                status = status[:-2]
+
+            elif time_online % 10 in [2, 3, 4]:
+                status = status[:-2] + 'a'
+
+        status += ' назад'
+        return status
+
+
+def random_time_inner() -> str:
+    hours = str(randint(0, 23))
+    minutes = str(randint(0, 59))
+    minutes = minutes.ljust(2, '0')
+    time_inner = f'{hours}:{minutes}'
+    return time_inner
+
+
 async def create_meme(path_img: str = None,
                       bottom_text: str = None,
                       upper_text: str = None,
                       search_text: str = None,
-                      mode='in',  # in, de, bo, fc
+                      mode='in',  # in, de, bo, fc, tg
                       upper_color='#FFFFFF',
                       bottom_color='#FFFFFF',
                       upper_stroke_color='#000000',
@@ -176,7 +231,7 @@ async def create_meme(path_img: str = None,
     if path_img:
         mem_path_img = path_img
     elif mode == 'fc':
-        mem_path_img = await search_picture(mem_search_text)
+        mem_path_img = await search_picture(mem_search_text)  # TODO search_best_picture
     else:
         mem_path_img = await search_picture(mem_search_text)
 
@@ -273,6 +328,24 @@ async def create_meme(path_img: str = None,
                                size=size,
                                distance=distance)
 
+    elif mode == 'tg':
+
+        online_status = random_online_status()
+        time_inner = random_time_inner()
+        ignore_status = choice([True, False])
+
+        path_mem = create_tele(path=mem_path_img,
+                               profile_name=mem_upper_text,
+                               msg=mem_bottom_text,
+                               online_status=online_status,
+                               time_inner=time_inner,
+                               ignore_status=ignore_status,
+                               profile_name_color=decoding_color(upper_color),
+                               msg_color=decoding_color(bottom_color),
+                               bg_color=decoding_color(upper_stroke_color),
+                               msg_bg_color=decoding_color(bottom_stroke_color),
+                               opacity=opacity)
+
     else:
         return mem_path_img
 
@@ -281,29 +354,31 @@ async def create_meme(path_img: str = None,
 
 
 if __name__ == '__main__':
-    asyncio.run(
-        create_meme(
-            path_img=None,
-            bottom_text="Гагарин",
-            upper_text="Не был первым человеком",
-            search_text=None,
-            mode='fc',
-            upper_color='#FFFFFF',
-            bottom_color='#FFFFFF',
-            # stroke_width=3,
-            giant_text=False
+    async def cal():
+        for i in range(1,10):
+            for j in range(1,10):
+                await create_meme(
+                        path_img=None,
+                        bottom_text='П'*i,
+                        upper_text='П'*j,
+                        search_text=f"мама{i}{j}",
+                        mode='de',
+                        upper_color='#FFFFFF',
+                        bottom_color='#FFFFFF',
+                        # stroke_width=3,
+                        giant_text=False
 
-            # path_img="pictures/1.jpg",
-            # bottom_text="1985",
-            # bottom_text="Горе от ума",
-            # search_text="Белый фон",
-            # bottom_text="Вероника решает умереть",
-            # upper_text="Пауло коэльо",
-            # upper_text="Ирвин жопэ Шоу",
-            # upper_text="Харпер ли",
-            # upper_text="Хуй сергеевич",
-            # upper_text=None,
-            # upper_stroke_color="#c1121f",
-            # bottom_stroke_color="#2d3a53",
-        )
-    )
+                        # path_img="pictures/1.jpg",
+                        # bottom_text="1985",
+                        # bottom_text="Горе от ума",
+                        # search_text="Белый фон",
+                        # bottom_text="Вероника решает умереть",
+                        # upper_text="Пауло коэльо",
+                        # upper_text="Ирвин жопэ Шоу",
+                        # upper_text="Харпер ли",
+                        # upper_text="Хуй сергеевич",
+                        # upper_text=None,
+                        # upper_stroke_color="#c1121f",
+                        # bottom_stroke_color="#2d3a53",
+                    )
+    asyncio.run(cal())

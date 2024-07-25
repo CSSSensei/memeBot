@@ -1,6 +1,6 @@
 import re
 from aiohttp import ClientSession
-from random import choice, randint
+from random import shuffle, randint
 from bs4 import BeautifulSoup
 import os
 
@@ -9,8 +9,8 @@ headers = {
 }
 
 
-def clean_link(link) -> str:
-    pattern = r'src="(.*?)"'
+def clean_link(link, attr: str) -> str:
+    pattern = f'{attr}="(.*?)"'
     match = re.findall(pattern, link)
     # print(match[0])
     return match[0]
@@ -27,16 +27,50 @@ async def fetch_image(session, url):
 
 async def search_picture(name: str):
     async with ClientSession() as session:
-        url = f'https://www.google.com/search?q={name}&tbm=isch'
-        async with session.get(url, headers=headers) as response:
+        search_url = f'https://www.google.com/search?q={name}&tbm=isch'
+        async with session.get(search_url, headers=headers) as response:
             if response.status == 200:
                 bs = BeautifulSoup(await response.text(), 'html.parser')
                 images = bs.find_all('img')[3:]
 
-                for _ in range(len(images)):
-                    image = clean_link(str(choice(images)))
-                    if 'https://' in image:
-                        image_data = await fetch_image(session, image)
+                images = [str(i) for i in images]
+
+                for url in images:
+                    url = clean_link(url, 'src')
+                    if 'https://' in url:
+                        image_data = await fetch_image(session, url)
+                        save_path = f'{os.path.dirname(__file__)}/pictures/{name}-{randint(1, 10 ** 9)}.png'
+                        with open(save_path, 'wb') as file:
+                            file.write(image_data)
+                        return save_path
+
+                raise Exception('Картинки не найдены или не удалось загрузить')
+
+            else:
+                raise Exception(f'Ошибка при поиске картинки: {response.status}')
+
+
+async def search_best_picture(name: str):
+    async with ClientSession() as session:
+        search_url = f'https://www.google.com/search?q={name}&tbm=isch'
+        async with session.get(search_url, headers=headers) as response:
+            if response.status == 200:
+                bs = BeautifulSoup(await response.text(), 'html.parser')
+                images = bs.find_all('a')[3:]
+
+                print(await response.text())
+                print("\n\n\n")
+
+                # images = [clean_link(str(i), 'href') for i in images]
+                # images = [str(i) for i in images]
+
+                # for i in images:
+                #     print(i)
+
+                for url in images:
+                    url = clean_link(url, 'href')
+                    if 'https://' in url:
+                        image_data = await fetch_image(session, url)
                         save_path = f'{os.path.dirname(__file__)}/pictures/{name}-{randint(1, 10 ** 9)}.png'
                         with open(save_path, 'wb') as file:
                             file.write(image_data)
