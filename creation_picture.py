@@ -204,6 +204,19 @@ def create_demotiv(path: str,
         img = img.resize((img.width, int(3.5 * distance + img_paste.height + 1.05 * text_size)))
 
     img_cnv = ImageDraw.Draw(img)
+    upper_bbox = list(img_cnv.textbbox((0, 0), upper_text, font_upper))
+    delta = 0  # высота между блоками кода upper и bottom
+    if bottom_text != '':
+        height_upper = upper_bbox[3] - upper_bbox[1]  # высота верхнего текста
+        PHASALO_ratio = 1.05  # межстрочный интерва 5%
+        if height_upper * PHASALO_ratio > 0.5 * distance + 0.68 * text_size:
+            delta = height_upper * PHASALO_ratio
+            img = img.resize((img.width, int(3.5 * distance +
+                                             img_paste.height + 1.05 * text_size +
+                                             delta - (0.5 * distance + 0.68 * text_size))))
+            img_cnv = ImageDraw.Draw(img)
+        else:
+            delta = 0.5 * distance + 0.68 * text_size
 
     img_cnv.rectangle((distance - 8,
                        distance - 8,
@@ -245,7 +258,7 @@ def create_demotiv(path: str,
                  anchor="mt"
                  )
     img_cnv.text((img.width // 2,
-                  int(img_paste.height + 2.5 * distance + 0.68 * text_size)),
+                  int(img_paste.height + 2 * distance + delta)),
                  bottom_text,
                  font=font_bottom,
                  fill=bottom_color,

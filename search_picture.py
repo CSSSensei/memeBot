@@ -1,6 +1,6 @@
 import re
 from aiohttp import ClientSession
-from random import shuffle, randint
+from random import shuffle, randint, choice
 from bs4 import BeautifulSoup
 import os
 
@@ -27,18 +27,16 @@ async def fetch_image(session, url):
 
 async def search_picture(name: str):
     async with ClientSession() as session:
-        search_url = f'https://www.google.com/search?q={name}&tbm=isch'
-        async with session.get(search_url, headers=headers) as response:
+        url = f'https://www.google.com/search?q={name}&tbm=isch'
+        async with session.get(url, headers=headers) as response:
             if response.status == 200:
                 bs = BeautifulSoup(await response.text(), 'html.parser')
                 images = bs.find_all('img')[3:]
 
-                images = [str(i) for i in images]
-
-                for url in images:
-                    url = clean_link(url, 'src')
-                    if 'https://' in url:
-                        image_data = await fetch_image(session, url)
+                for _ in range(len(images)):
+                    image = clean_link(str(choice(images)), 'src')
+                    if 'https://' in image:
+                        image_data = await fetch_image(session, image)
                         save_path = f'{os.path.dirname(__file__)}/pictures/{name}-{randint(1, 10 ** 9)}.png'
                         with open(save_path, 'wb') as file:
                             file.write(image_data)
