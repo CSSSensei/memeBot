@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 import aiosqlite
 import os
 
-users_db = f'{os.path.dirname(__file__)}/DB/users.db'
+users_db = f'{os.path.dirname(__file__)}/users.db'
 conn_loc = sqlite3.connect(users_db)
 cursor_loc = conn_loc.cursor()
 
