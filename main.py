@@ -30,8 +30,8 @@ import asyncio
 async def main() -> None:
     dp = Dispatcher()
     await bot.delete_webhook(drop_pending_updates=True)
-    dp.include_router(commands.router)
     dp.include_router(admin_handlers.router)
+    dp.include_router(commands.router)
     dp.include_router(user_handlers.router)
     await dp.start_polling(bot)
 

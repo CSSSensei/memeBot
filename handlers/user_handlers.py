@@ -77,7 +77,7 @@ async def send_meme(message: Message, user: UserDB, mode=None, city_meme=False):
                 return
             meme_txt = message.text if message.text else message.caption
             photo_id = await UserQueryDB.add_new_query(user.user_id, int(time.time()), meme_txt)
-            meme_txt = meme_txt.strip().split('\n')
+            meme_txt = meme_txt.strip().split('\n')[:3]
             meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
             photo_path = None
             if city_meme:
@@ -190,7 +190,7 @@ async def regenerate_button_distributor(callback: CallbackQuery, callback_data: 
     async with ChatActionSender(bot=bot, chat_id=callback.from_user.id, action='upload_photo'):
         photo_id = callback_data.photo_id
         query = await UserQueryDB.get_query_by_id(photo_id)
-        meme_txt = query.strip().split('\n')
+        meme_txt = query.strip().split('\n')[:3]
         meme_txt[0] = meme_txt[0].replace('/', '').replace("\\", '')
         user = await UserDB.get_user(user_id=callback.from_user.id, username=callback.from_user.username)
         meme_path = await mem_generator.create_meme(None, *meme_txt,
