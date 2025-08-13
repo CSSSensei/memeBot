@@ -60,8 +60,7 @@ async def user_query_by_page(user_id: int, user_id_to_find: Union[int, None], pa
         query_time = datetime.datetime.utcfromtimestamp(unix_time) + datetime.timedelta(hours=3)
         user_query = format_text.format_string(text).replace("\n", "\t")
         line = f'[{query_time}]: <blockquote>{user_query}</blockquote>\n\n'
-        if len(line) + len(txt) < 4096:
-            txt += line
+        txt += line
     txt = format_text.split_text(txt, MAX_SYMBOLS)
     if not message_id:
         await bot.send_message(chat_id=user_id, text=txt[page - 1].replace('\t', '\n'),
