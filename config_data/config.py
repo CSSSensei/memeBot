@@ -9,11 +9,13 @@ load_dotenv(find_dotenv())
 @dataclass
 class TgBot:
     token: str = os.getenv('TOKEN')
+    message_max_symbols: int = 4096
 
 
 @dataclass
 class Config:
     tg_bot: TgBot
+    gemini_api_key: str = os.getenv('GEMINI_API_KEY')
 
 
 def load_config(path: str | None = None) -> Config:

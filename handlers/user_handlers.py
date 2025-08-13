@@ -9,8 +9,7 @@ from aiogram.utils.chat_action import ChatActionSender
 from callbacks.callback_info import *
 from keyboards import user_keyboards
 from filters import filters, format_text
-import asyncio
-from config_data.config import bot, hz_answers
+from config_data.config import bot, hz_answers, config
 from config_data.modes_data import *
 import mem_generator
 
@@ -21,15 +20,17 @@ router = Router()
 async def explain_func(message: Message):
     required = 'поясни за '
     txt = message.text[len(required):]
+    if not txt:
+        await message.answer('А что пояснить-то?')
+        return
 
-    sent_message = await message.answer('Секунду, братан, шестерёнки работают')
-    loading_task = asyncio.create_task(format_text.loading_indicator(sent_message.chat.id, sent_message.message_id))
-    try:
-        response = await format_text.get_neuro_comment(txt.replace("\n", " "))
-        await message.answer(response, reply_markup=user_keyboards.basic_keyboard)
-    finally:
-        loading_task.cancel()
-        await bot.delete_message(chat_id=message.chat.id, message_id=sent_message.message_id)
+    async with ChatActionSender(bot=bot, chat_id=message.from_user.id):
+        try:
+            response = await format_text.get_neuro_comment(txt.replace("\n", " "))
+            await message.answer(response[:config.tg_bot.message_max_symbols], reply_markup=user_keyboards.basic_keyboard)
+        except Exception as e:
+            print(e)
+            await message.answer('бляяя братан не обессудь я хз сам че это')
 
 
 @router.message(F.text == 'Настройки')

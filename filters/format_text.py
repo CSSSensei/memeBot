@@ -1,9 +1,8 @@
-import re
-import g4f
 import asyncio
-from config_data.config import bot
+import re
+from google import genai
 
-gpt_client = g4f.client.Client()
+from config_data.config import config
 
 
 def find_first_number(input_string):
@@ -22,22 +21,15 @@ def format_string(text: str):
 
 
 async def get_neuro_comment(message_text):
-    response = gpt_client.chat.completions.create(
-        model='gpt-3.5-turbo',
-        messages=[{"role": "user",
-                   "content": f"Представь, что ты гопник. Объясни, что такое {message_text}, но говоря как некомпетентный человек и в дворовом стиле"}],
+    client_AI = genai.Client(api_key=config.gemini_api_key)
+
+    result = await asyncio.to_thread(
+        client_AI.models.generate_content,
+        model="gemini-2.5-flash",
+        contents=f"Представь, что ты гопник. Объясни, что такое {message_text}, но говоря как некомпетентный человек и в дворовом стиле. "
+                 f"Можешь использовать мат, не сдерживайся в выражениях"
     )
-    return response.choices[0].message.content
-
-
-async def loading_indicator(chat_id, mes_id):
-    clock = '🕐🕑🕒🕓🕔🕕🕖🕗🕘🕙🕚🕛'
-    cnt = 0
-    while True:
-        await bot.edit_message_text(chat_id=chat_id, message_id=mes_id,
-                                    text=f'Секунду, братан, шестерёнки работают {clock[cnt % len(clock)]}')
-        await asyncio.sleep(1)
-        cnt += 1
+    return result.text
 
 
 def split_text(text, n):
